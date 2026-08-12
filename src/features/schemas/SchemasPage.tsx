@@ -1,9 +1,4 @@
-import type { Schema } from '@shared/types'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { deleteSchema, getSchemas } from '@/api/schemas.ts'
-import { modals } from '@mantine/modals'
-import { notifications } from '@mantine/notifications'
 import {
   Button,
   Card,
@@ -15,7 +10,12 @@ import {
   Text,
   Title
 } from '@mantine/core'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { modals } from '@mantine/modals'
+import { notifications } from '@mantine/notifications'
+import type { Schema } from '@shared/types'
+import { ArrowRight, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export const SchemaList = () => {
   const navigate = useNavigate()
@@ -101,9 +101,18 @@ export const SchemaList = () => {
                 height: '100%'
               }}
             >
-              <Text fw={600} size="lg" mb="sm">
-                {schema.name}
-              </Text>
+              <Group justify="space-between" align="center" mb="md">
+                <Text fw={600} size="lg">
+                  {schema.name}
+                </Text>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/schemas/${schema.id}/entries`)}
+                  rightSection={<ArrowRight size={16} />}
+                >
+                  View entries
+                </Button>
+              </Group>
 
               <Stack gap={4}>
                 {schema.fields.map((field) => (

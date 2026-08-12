@@ -111,11 +111,17 @@ export const EntriesPage = () => {
   }
 
   const entryLabel = (entryToLabel: Entry) => {
-    const titleField = schema?.fields[0]
-    const value = titleField ? entryToLabel.data[titleField.id] : undefined
-    return value === null || value === undefined || value === ''
-      ? entryToLabel.id
-      : String(value)
+    const textField = schema?.fields.find((field) => {
+      if (field.type !== 'text') return false
+      const value = entryToLabel.data[field.id]
+      return typeof value === 'string' && value !== ''
+    })
+
+    if (textField) {
+      return String(entryToLabel.data[textField.id])
+    }
+
+    return `${entryToLabel.id.slice(0, 8)}…`
   }
 
   const openDeleteModal = (entryToDelete: Entry) =>

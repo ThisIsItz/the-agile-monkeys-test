@@ -1,6 +1,6 @@
-import { SchemaList } from '@/features/schemas/SchemaList.js'
+import { SchemaList } from '@/features/schemas/SchemasPage.js'
 import { useState } from 'react'
-import { SchemaForm } from './features/schemas/SchemaForm'
+import { SchemaForm } from './features/schemas/SchemaEditorPage'
 import type { Schema } from '@shared/types'
 
 type View = { type: 'list' } | { type: 'form'; schema?: Schema }

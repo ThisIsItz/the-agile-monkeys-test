@@ -1,6 +1,7 @@
 import { getEntries } from '@/api/entries'
 import { getSchema } from '@/api/schemas'
 import {
+  Anchor,
   Button,
   Card,
   Center,
@@ -14,13 +15,16 @@ import {
 import type { Entry, Schema } from '@shared/types'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 export const EntriesPage = () => {
   const navigate = useNavigate()
   const { schemaId } = useParams<{ schemaId: string }>()
   const [entries, setEntries] = useState<Entry[]>([])
   const [schema, setSchema] = useState<Schema>()
+  const [referenceLabels, setReferenceLabels] = useState<Record<string, string>>(
+    {}
+  )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,6 +48,52 @@ export const EntriesPage = () => {
 
     loadEntries()
   }, [schemaId])
+
+  useEffect(() => {
+    if (!schema) return
+
+    const targetSchemaIds = [
+      ...new Set(
+        schema.fields
+          .filter((field) => field.type === 'reference')
+          .map((field) => field.referenceTargetSchemaId)
+          .filter((id): id is string => Boolean(id))
+      )
+    ]
+    if (targetSchemaIds.length === 0) return
+
+    const loadReferenceLabels = async () => {
+      try {
+        const labels: Record<string, string> = {}
+
+        await Promise.all(
+          targetSchemaIds.map(async (targetSchemaId) => {
+            const [targetSchema, targetEntries] = await Promise.all([
+              getSchema(targetSchemaId),
+              getEntries(targetSchemaId)
+            ])
+            const titleField = targetSchema.fields[0]
+
+            for (const targetEntry of targetEntries) {
+              const value = titleField
+                ? targetEntry.data[titleField.id]
+                : undefined
+              labels[targetEntry.id] =
+                value === null || value === undefined || value === ''
+                  ? targetEntry.id
+                  : String(value)
+            }
+          })
+        )
+
+        setReferenceLabels(labels)
+      } catch (err) {
+        console.error('Failed to load reference labels', err)
+      }
+    }
+
+    loadReferenceLabels()
+  }, [schema])
 
   if (loading) return <Loader />
   if (error) return <div>Error: {error}</div>
@@ -78,10 +128,25 @@ export const EntriesPage = () => {
               <Stack gap="xs">
                 {schema.fields.map((field) => {
                   const value = entry.data[field.id]
+                  const isEmpty = value === '' || value == null
+
                   return (
                     <Text key={field.id} size="sm">
                       <strong>{field.name}:</strong>{' '}
-                      {value === '' || value == null ? '-' : String(value)}
+                      {isEmpty ? (
+                        '-'
+                      ) : field.type === 'reference' &&
+                        field.referenceTargetSchemaId ? (
+                        <Anchor
+                          component={Link}
+                          to={`/schemas/${field.referenceTargetSchemaId}/entries/${value}/edit`}
+                          size="sm"
+                        >
+                          {referenceLabels[String(value)] ?? String(value)}
+                        </Anchor>
+                      ) : (
+                        String(value)
+                      )}
                     </Text>
                   )
                 })}

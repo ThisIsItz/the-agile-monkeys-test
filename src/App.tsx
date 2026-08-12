@@ -1,5 +1,7 @@
+import { SchemaList } from '@/features/schemas/SchemaList.js'
+
 function App() {
-  return <div>App</div>
+  return <SchemaList />
 }
 
 export default App

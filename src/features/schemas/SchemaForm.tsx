@@ -1,10 +1,26 @@
-import { createSchema, getSchemas } from '@/api/schemas'
+import { createSchema, getSchemas, updateSchema } from '@/api/schemas'
 import { FIELD_TYPES, type FieldInput, type FieldType, type Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
 
-export const SchemaForm = () => {
-  const [name, setName] = useState('')
-  const [fields, setFields] = useState<FieldInput[]>([])
+export const SchemaForm = ({
+  schema,
+  handleBack
+}: {
+  schema?: Schema
+  handleBack: () => void
+}) => {
+  const [name, setName] = useState(schema?.name ?? '')
+  const [fields, setFields] = useState<FieldInput[]>(
+    schema?.fields.map(
+      ({ id, name, type, required, referenceTargetSchemaId }) => ({
+        id,
+        name,
+        type,
+        required,
+        referenceTargetSchemaId
+      })
+    ) ?? []
+  )
   const [availableSchemas, setAvailableSchemas] = useState<Schema[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -45,9 +61,14 @@ export const SchemaForm = () => {
     setError(null)
 
     try {
-      await createSchema({ name, fields })
-      setName('')
-      setFields([])
+      if (schema) {
+        await updateSchema(schema.id, { name, fields })
+        handleBack()
+      } else {
+        await createSchema({ name, fields })
+        setName('')
+        setFields([])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -57,6 +78,10 @@ export const SchemaForm = () => {
 
   return (
     <form onSubmit={handleSubmit}>
+      <button type="button" onClick={handleBack}>
+        Back
+      </button>
+      <h2>{schema ? 'Edit Schema' : 'Create Schema'}</h2>
       <div>
         <label>
           Schema Name:
@@ -131,7 +156,13 @@ export const SchemaForm = () => {
       </div>
       {error && <p className="schema-form__error">{error}</p>}
       <button type="submit" disabled={loading}>
-        {loading ? 'Creating...' : 'Create Schema'}
+        {schema
+          ? loading
+            ? 'Saving...'
+            : 'Save Changes'
+          : loading
+            ? 'Creating...'
+            : 'Create Schema'}
       </button>
     </form>
   )

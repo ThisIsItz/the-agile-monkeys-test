@@ -1,4 +1,4 @@
-import type { FieldInput, Schema } from '@shared/types.js'
+import type { Schema, SchemaInput } from '@shared/types.js'
 import { schemaSchema, schemasResponseSchema } from '@shared/validation.js'
 
 export async function getSchemas(): Promise<Schema[]> {
@@ -12,10 +12,7 @@ export async function getSchemas(): Promise<Schema[]> {
   return schemasResponseSchema.parse(data)
 }
 
-export async function createSchema(schemaInput: {
-  name: string
-  fields: FieldInput[]
-}): Promise<Schema> {
+export async function createSchema(schemaInput: SchemaInput): Promise<Schema> {
   const response = await fetch('/api/schemas', {
     method: 'POST',
     headers: {
@@ -26,6 +23,26 @@ export async function createSchema(schemaInput: {
 
   if (!response.ok) {
     throw new Error(`Error creating schema: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return schemaSchema.parse(data)
+}
+
+export async function updateSchema(
+  id: string,
+  schemaInput: SchemaInput
+): Promise<Schema> {
+  const response = await fetch(`/api/schemas/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(schemaInput)
+  })
+
+  if (!response.ok) {
+    throw new Error(`Error updating schema: ${response.statusText}`)
   }
 
   const data = await response.json()

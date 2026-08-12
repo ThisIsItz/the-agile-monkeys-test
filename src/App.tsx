@@ -1,24 +1,31 @@
 import { SchemaList } from '@/features/schemas/SchemaList.js'
 import { useState } from 'react'
 import { SchemaForm } from './features/schemas/SchemaForm'
+import type { Schema } from '@shared/types'
+
+type View = { type: 'list' } | { type: 'form'; schema?: Schema }
 
 function App() {
-  const [creating, setCreating] = useState(false)
+  const [view, setView] = useState<View>({ type: 'list' })
 
   const handleAddSchema = () => {
-    setCreating(true)
+    setView({ type: 'form' })
+  }
+
+  const handleEditSchema = (schema: Schema) => {
+    setView({ type: 'form', schema })
   }
 
   const handleBack = () => {
-    setCreating(false)
+    setView({ type: 'list' })
   }
 
   return (
     <div>
-      {creating ? (
-        <SchemaForm handleBack={handleBack} />
+      {view.type === 'form' ? (
+        <SchemaForm schema={view.schema} handleBack={handleBack} />
       ) : (
-        <SchemaList handleAdd={handleAddSchema} />
+        <SchemaList handleAdd={handleAddSchema} handleEdit={handleEditSchema} />
       )}
     </div>
   )

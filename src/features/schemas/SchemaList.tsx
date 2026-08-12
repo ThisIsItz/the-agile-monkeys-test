@@ -2,7 +2,13 @@ import type { Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
 import { getSchemas } from '@/api/schemas.ts'
 
-export const SchemaList = ({ handleAdd }: { handleAdd: () => void }) => {
+export const SchemaList = ({
+  handleAdd,
+  handleEdit
+}: {
+  handleAdd: () => void
+  handleEdit: (schema: Schema) => void
+}) => {
   const [schemas, setSchemas] = useState<Schema[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,6 +43,9 @@ export const SchemaList = ({ handleAdd }: { handleAdd: () => void }) => {
           {schemas.map((schema) => (
             <li key={schema.id}>
               <strong>{schema.name}</strong>
+              <button type="button" onClick={() => handleEdit(schema)}>
+                Edit
+              </button>
 
               <ul>
                 {schema.fields.map((field) => (

@@ -8,6 +8,7 @@ body {
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
-.schema-form__error {
+.schema-form__error,
+.schema-list__error {
   color: var(--color-error);
 }

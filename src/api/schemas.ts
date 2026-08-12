@@ -29,6 +29,16 @@ export async function createSchema(schemaInput: SchemaInput): Promise<Schema> {
   return schemaSchema.parse(data)
 }
 
+export async function deleteSchema(id: string): Promise<void> {
+  const response = await fetch(`/api/schemas/${id}`, {
+    method: 'DELETE'
+  })
+
+  if (!response.ok) {
+    throw new Error(`Error deleting schema: ${response.statusText}`)
+  }
+}
+
 export async function updateSchema(
   id: string,
   schemaInput: SchemaInput

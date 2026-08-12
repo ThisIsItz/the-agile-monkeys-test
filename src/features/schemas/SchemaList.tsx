@@ -1,6 +1,8 @@
 import type { Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
-import { getSchemas } from '@/api/schemas.ts'
+import { deleteSchema, getSchemas } from '@/api/schemas.ts'
+import { modals } from '@mantine/modals'
+import { notifications } from '@mantine/notifications'
 
 export const SchemaList = ({
   handleAdd,
@@ -28,8 +30,35 @@ export const SchemaList = ({
     loadSchemas()
   }, [])
 
+  const handleDeleteSchema = async (schema: Schema) => {
+    try {
+      await deleteSchema(schema.id)
+      const data = await getSchemas()
+      setSchemas(data)
+      notifications.show({
+        message: `Schema "${schema.name}" deleted`,
+        color: 'green'
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    }
+  }
+
+  const openDeleteModal = (schema: Schema) =>
+    modals.openConfirmModal({
+      title: 'Delete schema',
+      children: (
+        <p>
+          Are you sure you want to delete the schema "{schema.name}"? This
+          action cannot be undone.
+        </p>
+      ),
+      labels: { confirm: 'Delete', cancel: 'Cancel' },
+      confirmProps: { color: 'red' },
+      onConfirm: () => handleDeleteSchema(schema)
+    })
+
   if (loading) return <div>Loading...</div>
-  if (error) return <div>Error: {error}</div>
 
   return (
     <div>
@@ -37,6 +66,7 @@ export const SchemaList = ({
       <button type="button" onClick={handleAdd}>
         Add new schema
       </button>
+      {error && <p className="schema-list__error">{error}</p>}
 
       {schemas.length > 0 ? (
         <ul>
@@ -45,6 +75,9 @@ export const SchemaList = ({
               <strong>{schema.name}</strong>
               <button type="button" onClick={() => handleEdit(schema)}>
                 Edit
+              </button>
+              <button type="button" onClick={() => openDeleteModal(schema)}>
+                Delete
               </button>
 
               <ul>

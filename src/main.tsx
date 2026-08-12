@@ -11,7 +11,7 @@ import App from './App.tsx'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider>
-      <ModalsProvider>
+      <ModalsProvider modalProps={{ centered: true }}>
         <Notifications />
         <App />
       </ModalsProvider>

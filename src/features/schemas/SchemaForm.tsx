@@ -1,6 +1,7 @@
 import { createSchema, getSchemas, updateSchema } from '@/api/schemas'
 import { FIELD_TYPES, type FieldInput, type FieldType, type Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
+import { notifications } from '@mantine/notifications'
 
 export const SchemaForm = ({
   schema,
@@ -67,12 +68,12 @@ export const SchemaForm = ({
     try {
       if (schema) {
         await updateSchema(schema.id, { name, fields })
-        handleBack()
+        notifications.show({ message: `Schema "${name}" updated`, color: 'green' })
       } else {
         await createSchema({ name, fields })
-        setName('')
-        setFields([])
+        notifications.show({ message: `Schema "${name}" created`, color: 'green' })
       }
+      handleBack()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {

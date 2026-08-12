@@ -12,6 +12,8 @@ export const SchemaEditorPage = () => {
   const [loading, setLoading] = useState(Boolean(id))
   const [error, setError] = useState<string | null>(null)
 
+  const handleBack = () => navigate('/schemas')
+
   useEffect(() => {
     if (!id) return
 
@@ -28,8 +30,6 @@ export const SchemaEditorPage = () => {
 
     loadSchema()
   }, [id])
-
-  const handleBack = () => navigate('/schemas')
 
   if (loading) return <Loader />
   if (error) return <div>Error: {error}</div>

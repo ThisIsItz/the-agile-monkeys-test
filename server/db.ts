@@ -34,4 +34,12 @@ db.exec(`
     updated_at TEXT NOT NULL,
     UNIQUE (schema_id, name)
   );
+
+  CREATE TABLE IF NOT EXISTS entries (
+    id TEXT PRIMARY KEY,
+    schema_id TEXT NOT NULL REFERENCES schemas(id) ON DELETE CASCADE,
+    data TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
 `)

@@ -1,5 +1,5 @@
 import type { z } from 'zod'
-import type { fieldSchema, schemaSchema } from './validation.js'
+import type { entrySchema, fieldSchema, schemaSchema } from './validation.js'
 
 export const FIELD_TYPES = [
   'text',
@@ -26,4 +26,12 @@ export interface FieldInput {
 export interface SchemaInput {
   name: string
   fields: FieldInput[]
+}
+
+export type EntryFieldValue = string | number | boolean | null
+
+export type Entry = z.infer<typeof entrySchema>
+
+export interface EntryInput {
+  data: Record<string, EntryFieldValue>
 }

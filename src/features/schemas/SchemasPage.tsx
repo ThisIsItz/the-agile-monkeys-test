@@ -1,9 +1,7 @@
-import type { Schema } from '@shared/types'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { deleteSchema, getSchemas } from '@/api/schemas.ts'
-import { modals } from '@mantine/modals'
-import { notifications } from '@mantine/notifications'
+import { confirmDelete } from '@/components/confirmDelete'
+import { EntityActions } from '@/components/EntityActions'
+import { ListPageHeader } from '@/components/ListPageHeader'
 import {
   Button,
   Card,
@@ -12,31 +10,19 @@ import {
   Loader,
   SimpleGrid,
   Stack,
-  Text,
-  Title
+  Text
 } from '@mantine/core'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { notifications } from '@mantine/notifications'
+import type { Schema } from '@shared/types'
+import { ArrowRight } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export const SchemaList = () => {
   const navigate = useNavigate()
   const [schemas, setSchemas] = useState<Schema[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const loadSchemas = async () => {
-      try {
-        const data = await getSchemas()
-        setSchemas(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadSchemas()
-  }, [])
 
   const handleDeleteSchema = async (schema: Schema) => {
     try {
@@ -53,38 +39,39 @@ export const SchemaList = () => {
   }
 
   const openDeleteModal = (schema: Schema) =>
-    modals.openConfirmModal({
+    confirmDelete({
       title: 'Delete schema',
-      children: (
-        <p>
-          Are you sure you want to delete the schema "{schema.name}"? This
-          action cannot be undone.
-        </p>
-      ),
-      labels: { confirm: 'Delete', cancel: 'Cancel' },
-      confirmProps: { color: 'red' },
+      message: `Are you sure you want to delete the schema "${schema.name}"? This action cannot be undone.`,
       onConfirm: () => handleDeleteSchema(schema)
     })
 
   const referenceTargetName = (targetId: string) =>
     schemas.find((schema) => schema.id === targetId)?.name ?? 'Unknown'
 
+  useEffect(() => {
+    const loadSchemas = async () => {
+      try {
+        const data = await getSchemas()
+        setSchemas(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadSchemas()
+  }, [])
+
   if (loading) return <Loader />
 
   return (
     <div>
-      <Group justify="space-between" align="center" mb="xl">
-        <Title>Schemas</Title>
-        <Button
-          variant="filled"
-          color="violet"
-          onClick={() => navigate('/schemas/new')}
-          size="md"
-          leftSection={<Plus size={16} />}
-        >
-          Add schema
-        </Button>
-      </Group>
+      <ListPageHeader
+        title="Schemas"
+        actionLabel="Add schema"
+        onAction={() => navigate('/schemas/new')}
+      />
       {error && <p className="schema-list__error">{error}</p>}
 
       {schemas.length > 0 ? (
@@ -101,9 +88,19 @@ export const SchemaList = () => {
                 height: '100%'
               }}
             >
-              <Text fw={600} size="lg" mb="sm">
-                {schema.name}
-              </Text>
+              <Group justify="space-between" align="center" mb="md">
+                <Text fw={600} size="lg">
+                  {schema.name}
+                </Text>
+                <Button
+                  variant="subtle"
+                  size="xs"
+                  onClick={() => navigate(`/schemas/${schema.id}/entries`)}
+                  rightSection={<ArrowRight size={16} />}
+                >
+                  View entries
+                </Button>
+              </Group>
 
               <Stack gap={4}>
                 {schema.fields.map((field) => (
@@ -122,25 +119,11 @@ export const SchemaList = () => {
                 ))}
               </Stack>
 
-              <Group justify="flex-end" gap="xs" mt="auto">
-                <Button
-                  size="xs"
-                  variant="light"
-                  onClick={() => navigate(`/schemas/${schema.id}/edit`)}
-                  leftSection={<Pencil size={16} />}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="xs"
-                  variant="light"
-                  color="red"
-                  onClick={() => openDeleteModal(schema)}
-                  leftSection={<Trash2 size={16} />}
-                >
-                  Delete
-                </Button>
-              </Group>
+              <EntityActions
+                mt="auto"
+                onEdit={() => navigate(`/schemas/${schema.id}/edit`)}
+                onDelete={() => openDeleteModal(schema)}
+              />
             </Card>
           ))}
         </SimpleGrid>

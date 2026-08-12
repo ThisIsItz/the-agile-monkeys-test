@@ -22,3 +22,20 @@ export const schemaSchema = z.object({
 })
 
 export const schemasResponseSchema = z.array(schemaSchema)
+
+export const entryFieldValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null()
+])
+
+export const entrySchema = z.object({
+  id: z.string(),
+  schemaId: z.string(),
+  data: z.record(z.string(), entryFieldValueSchema),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export const entriesResponseSchema = z.array(entrySchema)

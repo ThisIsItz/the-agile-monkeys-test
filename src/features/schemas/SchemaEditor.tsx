@@ -1,6 +1,7 @@
 import { createSchema, getSchemas, updateSchema } from '@/api/schemas'
 import {
   ActionIcon,
+  Alert,
   Button,
   Card,
   Checkbox,
@@ -14,7 +15,7 @@ import {
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { FIELD_TYPES, type Schema, type SchemaInput } from '@shared/types'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export const SchemaEditor = ({
@@ -111,6 +112,11 @@ export const SchemaEditor = ({
         Back
       </Button>
       <Title>{schema ? 'Edit Schema' : 'Create Schema'}</Title>
+      {error && (
+        <Alert color="red" mt="md" icon={<TriangleAlert size={16} />}>
+          {error}
+        </Alert>
+      )}
       <form onSubmit={schemaForm.onSubmit(handleFormSubmit)}>
         <TextInput
           {...schemaForm.getInputProps('name')}
@@ -144,6 +150,7 @@ export const SchemaEditor = ({
                     label="Name"
                     placeholder="Enter field name"
                     {...schemaForm.getInputProps(`fields.${index}.name`)}
+                    required
                     w={400}
                   />
                   <Select
@@ -208,7 +215,6 @@ export const SchemaEditor = ({
             </Group>
           </Stack>
         </div>
-        {error && <p className="schema-form__error">{error}</p>}
         <Group justify="flex-end" mt="xl">
           <Button type="submit" size="md" loading={schemaForm.submitting}>
             {schema ? 'Save changes' : 'Create schema'}

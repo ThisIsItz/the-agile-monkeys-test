@@ -14,8 +14,3 @@ body {
   min-height: 100vh;
   padding: 2rem;
 }
-
-.schema-form__error,
-.schema-list__error {
-  color: var(--color-error);
-}

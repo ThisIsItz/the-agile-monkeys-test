@@ -9,6 +9,7 @@ import {
   Card,
   Center,
   Group,
+  Loader,
   SimpleGrid,
   Stack,
   Text,
@@ -68,7 +69,7 @@ export const SchemaList = () => {
   const referenceTargetName = (targetId: string) =>
     schemas.find((schema) => schema.id === targetId)?.name ?? 'Unknown'
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <Loader />
 
   return (
     <div>

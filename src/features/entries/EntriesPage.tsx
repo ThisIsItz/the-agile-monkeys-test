@@ -1,7 +1,18 @@
 import { getEntries } from '@/api/entries'
 import { getSchema } from '@/api/schemas'
-import { Button, Center, Group, Loader, Text, Title } from '@mantine/core'
-import type { Entry } from '@shared/types'
+import { NotFoundPage } from '@/components/NotFoundPage'
+import {
+  Button,
+  Card,
+  Center,
+  Group,
+  Loader,
+  SimpleGrid,
+  Stack,
+  Text,
+  Title
+} from '@mantine/core'
+import type { Entry, Schema } from '@shared/types'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -10,6 +21,7 @@ export const EntriesPage = () => {
   const navigate = useNavigate()
   const { schemaId } = useParams<{ schemaId: string }>()
   const [entries, setEntries] = useState<Entry[]>([])
+  const [schema, setSchema] = useState<Schema>()
   const [schemaName, setSchemaName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +36,10 @@ export const EntriesPage = () => {
         ])
 
         setEntries(data)
-        if (schema) setSchemaName(schema.name)
+        if (schema) {
+          setSchemaName(schema.name)
+          setSchema(schema)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
@@ -37,6 +52,7 @@ export const EntriesPage = () => {
 
   if (loading) return <Loader />
   if (error) return <div>Error: {error}</div>
+  if (!schema) return <NotFoundPage />
 
   return (
     <div>
@@ -61,7 +77,35 @@ export const EntriesPage = () => {
         </Button>
       </Group>
       {entries.length > 0 ? (
-        <div>Entries list</div>
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="md">
+          {entries.map((entry) => (
+            <Card key={entry.id} withBorder padding="lg" radius="md">
+              <Stack gap="xs">
+                {schema.fields.map((field) => {
+                  const value = entry.data[field.id]
+                  return (
+                    <Text key={field.id} size="sm">
+                      <strong>{field.name}:</strong>{' '}
+                      {value === '' || value == null ? '-' : String(value)}
+                    </Text>
+                  )
+                })}
+
+                <Group justify="flex-end" mt="md">
+                  <Button
+                    size="xs"
+                    variant="light"
+                    onClick={() =>
+                      navigate(`/schemas/${schema.id}/entries/${entry.id}/edit`)
+                    }
+                  >
+                    Edit
+                  </Button>
+                </Group>
+              </Stack>
+            </Card>
+          ))}
+        </SimpleGrid>
       ) : (
         <Center mih={200}>
           <Text c="dimmed">No entries yet.</Text>

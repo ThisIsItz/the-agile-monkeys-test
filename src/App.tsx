@@ -9,9 +9,17 @@ function App() {
     setCreating(true)
   }
 
+  const handleBack = () => {
+    setCreating(false)
+  }
+
   return (
     <div>
-      {creating ? <SchemaForm /> : <SchemaList handleAdd={handleAddSchema} />}
+      {creating ? (
+        <SchemaForm handleBack={handleBack} />
+      ) : (
+        <SchemaList handleAdd={handleAddSchema} />
+      )}
     </div>
   )
 }

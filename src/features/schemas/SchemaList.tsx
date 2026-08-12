@@ -36,7 +36,24 @@ export const SchemaList = ({ handleAdd }: { handleAdd: () => void }) => {
         <ul>
           {schemas.map((schema) => (
             <li key={schema.id}>
-              <strong>{schema.name}</strong> (Fields: {schema.fields.length})
+              <strong>{schema.name}</strong>
+
+              <ul>
+                {schema.fields.map((field) => (
+                  <li key={field.id}>
+                    <span>{field.name}</span> <span>{field.type}</span>
+                    {field.type === 'reference' &&
+                      field.referenceTargetSchemaId && (
+                        <span>
+                          {schemas.find(
+                            (schema) =>
+                              schema.id === field.referenceTargetSchemaId
+                          )?.name ?? 'Unknown'}
+                        </span>
+                      )}
+                  </li>
+                ))}
+              </ul>
             </li>
           ))}
         </ul>

@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { EntryEditor } from './EntryEditor'
 import { getSchema } from '@/api/schemas'
-import { NotFoundPage } from '@/components/NotFoundPage'
 
 export const EntryEditorPage = () => {
   const { entryId, schemaId } = useParams<{
@@ -44,7 +43,7 @@ export const EntryEditorPage = () => {
 
   if (loading) return <Loader />
   if (error) return <div>Error: {error}</div>
-  if (!schema) return <NotFoundPage />
+  if (!schema) return null
 
   return <EntryEditor entry={entry} schema={schema} handleBack={handleBack} />
 }

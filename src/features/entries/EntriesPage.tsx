@@ -1,6 +1,5 @@
 import { getEntries } from '@/api/entries'
 import { getSchema } from '@/api/schemas'
-import { NotFoundPage } from '@/components/NotFoundPage'
 import {
   Button,
   Card,
@@ -22,7 +21,6 @@ export const EntriesPage = () => {
   const { schemaId } = useParams<{ schemaId: string }>()
   const [entries, setEntries] = useState<Entry[]>([])
   const [schema, setSchema] = useState<Schema>()
-  const [schemaName, setSchemaName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -30,16 +28,13 @@ export const EntriesPage = () => {
     const loadEntries = async () => {
       try {
         if (!schemaId) return
-        const [data, schema] = await Promise.all([
+        const [data, fetchedSchema] = await Promise.all([
           getEntries(schemaId),
           getSchema(schemaId)
         ])
 
         setEntries(data)
-        if (schema) {
-          setSchemaName(schema.name)
-          setSchema(schema)
-        }
+        setSchema(fetchedSchema)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
@@ -52,7 +47,7 @@ export const EntriesPage = () => {
 
   if (loading) return <Loader />
   if (error) return <div>Error: {error}</div>
-  if (!schema) return <NotFoundPage />
+  if (!schema) return null
 
   return (
     <div>
@@ -65,7 +60,7 @@ export const EntriesPage = () => {
         Back
       </Button>
       <Group justify="space-between" align="center" mb="xl">
-        <Title>Entries for {schemaName} schema</Title>
+        <Title>Entries for {schema.name} schema</Title>
         <Button
           variant="filled"
           color="violet"

@@ -7,6 +7,7 @@
 - Avoid premature abstractions and over-engineering.
 - Follow existing project conventions.
 - Read `CHALLENGE.md` when challenge requirements affect a decision.
+- Keep responses brief: max 5 bullet points unless more detail is requested; avoid filler and unsolicited explanations.
 
 ## Changes
 

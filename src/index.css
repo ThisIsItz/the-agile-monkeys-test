@@ -1,8 +1,16 @@
 :root {
   color-scheme: light dark;
+  --color-error: #c0392b;
 }
 
 body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 2rem;
 }

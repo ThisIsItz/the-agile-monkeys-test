@@ -2,7 +2,7 @@ import { getEntries } from '@/api/entries'
 import { getSchema } from '@/api/schemas'
 import { Button, Center, Group, Loader, Text, Title } from '@mantine/core'
 import type { Entry } from '@shared/types'
-import { Plus } from 'lucide-react'
+import { ArrowLeft, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -39,6 +39,14 @@ export const EntriesPage = () => {
 
   return (
     <div>
+      <Button
+        variant="subtle"
+        onClick={() => navigate('/schemas')}
+        leftSection={<ArrowLeft size={16} />}
+        color="gray"
+      >
+        Back
+      </Button>
       <Group justify="space-between" align="center" mb="xl">
         <Title>Entries for {schemaName} schema</Title>
         <Button

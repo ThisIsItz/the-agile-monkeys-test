@@ -1,4 +1,4 @@
-import { getEntries } from '@/api/entries'
+import { deleteEntry, getEntries } from '@/api/entries'
 import { getSchema } from '@/api/schemas'
 import {
   Anchor,
@@ -12,8 +12,10 @@ import {
   Text,
   Title
 } from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { notifications } from '@mantine/notifications'
 import type { Entry, Schema } from '@shared/types'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
@@ -22,9 +24,9 @@ export const EntriesPage = () => {
   const { schemaId } = useParams<{ schemaId: string }>()
   const [entries, setEntries] = useState<Entry[]>([])
   const [schema, setSchema] = useState<Schema>()
-  const [referenceLabels, setReferenceLabels] = useState<Record<string, string>>(
-    {}
-  )
+  const [referenceLabels, setReferenceLabels] = useState<
+    Record<string, string>
+  >({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -95,6 +97,41 @@ export const EntriesPage = () => {
     loadReferenceLabels()
   }, [schema])
 
+  const handleDeleteEntry = async (entryToDelete: Entry) => {
+    if (!schemaId) return
+
+    try {
+      await deleteEntry(schemaId, entryToDelete.id)
+      const data = await getEntries(schemaId)
+      setEntries(data)
+      notifications.show({ message: 'Entry deleted', color: 'green' })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    }
+  }
+
+  const entryLabel = (entryToLabel: Entry) => {
+    const titleField = schema?.fields[0]
+    const value = titleField ? entryToLabel.data[titleField.id] : undefined
+    return value === null || value === undefined || value === ''
+      ? entryToLabel.id
+      : String(value)
+  }
+
+  const openDeleteModal = (entryToDelete: Entry) =>
+    modals.openConfirmModal({
+      title: 'Delete entry',
+      children: (
+        <p>
+          Are you sure you want to delete "{entryLabel(entryToDelete)}"? This
+          action cannot be undone.
+        </p>
+      ),
+      labels: { confirm: 'Delete', cancel: 'Cancel' },
+      confirmProps: { color: 'red' },
+      onConfirm: () => handleDeleteEntry(entryToDelete)
+    })
+
   if (loading) return <Loader />
   if (error) return <div>Error: {error}</div>
   if (!schema) return null
@@ -151,15 +188,25 @@ export const EntriesPage = () => {
                   )
                 })}
 
-                <Group justify="flex-end" mt="md">
+                <Group justify="flex-end" gap="xs" mt="md">
                   <Button
                     size="xs"
                     variant="light"
                     onClick={() =>
                       navigate(`/schemas/${schema.id}/entries/${entry.id}/edit`)
                     }
+                    leftSection={<Pencil size={16} />}
                   >
                     Edit
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    color="red"
+                    leftSection={<Trash2 size={16} />}
+                    onClick={() => openDeleteModal(entry)}
+                  >
+                    Delete
                   </Button>
                 </Group>
               </Stack>

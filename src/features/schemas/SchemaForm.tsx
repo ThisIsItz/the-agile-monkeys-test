@@ -1,12 +1,26 @@
-import { createSchema } from '@/api/schemas'
-import { FIELD_TYPES, type FieldInput, type FieldType } from '@shared/types'
-import { useState } from 'react'
+import { createSchema, getSchemas } from '@/api/schemas'
+import { FIELD_TYPES, type FieldInput, type FieldType, type Schema } from '@shared/types'
+import { useEffect, useState } from 'react'
 
 export const SchemaForm = () => {
   const [name, setName] = useState('')
   const [fields, setFields] = useState<FieldInput[]>([])
+  const [availableSchemas, setAvailableSchemas] = useState<Schema[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadAvailableSchemas = async () => {
+      try {
+        const data = await getSchemas()
+        setAvailableSchemas(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      }
+    }
+
+    loadAvailableSchemas()
+  }, [])
 
   const handleAddField = () => {
     setFields([
@@ -89,13 +103,33 @@ export const SchemaForm = () => {
                 }
               />
             </label>
+            {field.type === 'reference' && (
+              <select
+                value={field.referenceTargetSchemaId ?? ''}
+                onChange={(e) =>
+                  handleFieldChange(index, {
+                    referenceTargetSchemaId: e.target.value
+                  })
+                }
+                required
+              >
+                <option value="" disabled>
+                  Select referenced schema
+                </option>
+                {availableSchemas.map((schema) => (
+                  <option key={schema.id} value={schema.id}>
+                    {schema.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         ))}
         <button type="button" onClick={handleAddField}>
           Add Field
         </button>
       </div>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
+      {error && <p className="schema-form__error">{error}</p>}
       <button type="submit" disabled={loading}>
         {loading ? 'Creating...' : 'Create Schema'}
       </button>

@@ -1,8 +1,13 @@
 :root {
   color-scheme: light dark;
+  --color-error: #c0392b;
 }
 
 body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+.schema-form__error {
+  color: var(--color-error);
 }

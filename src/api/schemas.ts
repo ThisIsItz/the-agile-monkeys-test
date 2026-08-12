@@ -1,5 +1,5 @@
 import type { FieldInput, Schema } from '@shared/types.js'
-import { schemasResponseSchema } from '@shared/validation.js'
+import { schemaSchema, schemasResponseSchema } from '@shared/validation.js'
 
 export async function getSchemas(): Promise<Schema[]> {
   const response = await fetch('/api/schemas')
@@ -29,5 +29,5 @@ export async function createSchema(schemaInput: {
   }
 
   const data = await response.json()
-  return data as Schema
+  return schemaSchema.parse(data)
 }

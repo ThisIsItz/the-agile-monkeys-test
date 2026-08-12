@@ -28,6 +28,9 @@ export const SchemaList = ({ handleAdd }: { handleAdd: () => void }) => {
   return (
     <div>
       <h1>Schemas</h1>
+      <button type="button" onClick={handleAdd}>
+        Add new schema
+      </button>
 
       {schemas.length > 0 ? (
         <ul>
@@ -38,12 +41,7 @@ export const SchemaList = ({ handleAdd }: { handleAdd: () => void }) => {
           ))}
         </ul>
       ) : (
-        <div>
-          <p>No schemas yet.</p>
-          <button type="button" onClick={handleAdd}>
-            Add new schema
-          </button>
-        </div>
+        <p>No schemas yet.</p>
       )}
     </div>
   )

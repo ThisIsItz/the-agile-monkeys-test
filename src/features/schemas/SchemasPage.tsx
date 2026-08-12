@@ -106,7 +106,8 @@ export const SchemaList = () => {
                   {schema.name}
                 </Text>
                 <Button
-                  variant="outline"
+                  variant="subtle"
+                  size="xs"
                   onClick={() => navigate(`/schemas/${schema.id}/entries`)}
                   rightSection={<ArrowRight size={16} />}
                 >

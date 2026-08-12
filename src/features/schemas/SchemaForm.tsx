@@ -55,6 +55,10 @@ export const SchemaForm = ({
     setFields(newFields)
   }
 
+  const handleRemoveField = (index: number) => {
+    setFields(fields.filter((_, i) => i !== index))
+  }
+
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -148,6 +152,9 @@ export const SchemaForm = ({
                 ))}
               </select>
             )}
+            <button type="button" onClick={() => handleRemoveField(index)}>
+              Remove
+            </button>
           </div>
         ))}
         <button type="button" onClick={handleAddField}>

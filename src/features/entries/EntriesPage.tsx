@@ -1,21 +1,21 @@
 import { deleteEntry, getEntries } from '@/api/entries'
 import { getSchema } from '@/api/schemas'
+import { confirmDelete } from '@/components/confirmDelete'
+import { EntityActions } from '@/components/EntityActions'
+import { ListPageHeader } from '@/components/ListPageHeader'
 import {
   Anchor,
   Button,
   Card,
   Center,
-  Group,
   Loader,
   SimpleGrid,
   Stack,
-  Text,
-  Title
+  Text
 } from '@mantine/core'
-import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import type { Entry, Schema } from '@shared/types'
-import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
@@ -125,16 +125,9 @@ export const EntriesPage = () => {
   }
 
   const openDeleteModal = (entryToDelete: Entry) =>
-    modals.openConfirmModal({
+    confirmDelete({
       title: 'Delete entry',
-      children: (
-        <p>
-          Are you sure you want to delete "{entryLabel(entryToDelete)}" entry?
-          This action cannot be undone.
-        </p>
-      ),
-      labels: { confirm: 'Delete', cancel: 'Cancel' },
-      confirmProps: { color: 'red' },
+      message: `Are you sure you want to delete "${entryLabel(entryToDelete)}" entry? This action cannot be undone.`,
       onConfirm: () => handleDeleteEntry(entryToDelete)
     })
 
@@ -152,18 +145,11 @@ export const EntriesPage = () => {
       >
         Back
       </Button>
-      <Group justify="space-between" align="center" mb="xl">
-        <Title>Entries for {schema.name} schema</Title>
-        <Button
-          variant="filled"
-          color="violet"
-          onClick={() => navigate(`/schemas/${schemaId}/entries/new`)}
-          size="md"
-          leftSection={<Plus size={16} />}
-        >
-          Add Entry
-        </Button>
-      </Group>
+      <ListPageHeader
+        title={`Entries for ${schema.name} schema`}
+        actionLabel="Add Entry"
+        onAction={() => navigate(`/schemas/${schemaId}/entries/new`)}
+      />
       {entries.length > 0 ? (
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="md">
           {entries.map((entry) => (
@@ -194,27 +180,13 @@ export const EntriesPage = () => {
                   )
                 })}
 
-                <Group justify="flex-end" gap="xs" mt="md">
-                  <Button
-                    size="xs"
-                    variant="light"
-                    onClick={() =>
-                      navigate(`/schemas/${schema.id}/entries/${entry.id}/edit`)
-                    }
-                    leftSection={<Pencil size={16} />}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="light"
-                    color="red"
-                    leftSection={<Trash2 size={16} />}
-                    onClick={() => openDeleteModal(entry)}
-                  >
-                    Delete
-                  </Button>
-                </Group>
+                <EntityActions
+                  mt="md"
+                  onEdit={() =>
+                    navigate(`/schemas/${schema.id}/entries/${entry.id}/edit`)
+                  }
+                  onDelete={() => openDeleteModal(entry)}
+                />
               </Stack>
             </Card>
           ))}

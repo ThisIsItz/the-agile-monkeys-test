@@ -1,8 +1,14 @@
-export const FIELD_TYPES = ['text', 'number', 'boolean', 'date', 'reference'] as const
+export const FIELD_TYPES = [
+  'text',
+  'number',
+  'boolean',
+  'date',
+  'reference'
+] as const
 
 export type FieldType = (typeof FIELD_TYPES)[number]
 
-export interface FieldRecord {
+export interface Field {
   id: string
   schemaId: string
   name: string
@@ -14,10 +20,10 @@ export interface FieldRecord {
   updatedAt: string
 }
 
-export interface SchemaRecord {
+export interface Schema {
   id: string
   name: string
-  fields: FieldRecord[]
+  fields: Field[]
   createdAt: string
   updatedAt: string
 }

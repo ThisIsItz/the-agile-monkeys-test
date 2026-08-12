@@ -3,11 +3,11 @@ import { db } from './db.js'
 import { HttpError } from './http-error.js'
 import type {
   FieldInput,
-  FieldRecord,
+  Field,
   FieldType,
   SchemaInput,
-  SchemaRecord
-} from './types.js'
+  Schema
+} from '@shared/types.js'
 
 interface SchemaRow {
   id: string
@@ -50,7 +50,7 @@ function isSqliteConstraintError(
   )
 }
 
-function mapField(row: FieldRow): FieldRecord {
+function mapField(row: FieldRow): Field {
   return {
     id: row.id,
     schemaId: row.schema_id,
@@ -64,7 +64,7 @@ function mapField(row: FieldRow): FieldRecord {
   }
 }
 
-function mapSchema(row: SchemaRow, fieldRows: FieldRow[]): SchemaRecord {
+function mapSchema(row: SchemaRow, fieldRows: FieldRow[]): Schema {
   return {
     id: row.id,
     name: row.name,
@@ -80,14 +80,14 @@ function getFieldRows(schemaId: string): FieldRow[] {
     .all(schemaId) as FieldRow[]
 }
 
-export function listSchemas(): SchemaRecord[] {
+export function listSchemas(): Schema[] {
   const rows = db
     .prepare('SELECT * FROM schemas ORDER BY created_at ASC')
     .all() as SchemaRow[]
   return rows.map((row) => mapSchema(row, getFieldRows(row.id)))
 }
 
-export function getSchemaById(id: string): SchemaRecord | undefined {
+export function getSchemaById(id: string): Schema | undefined {
   const row = db.prepare('SELECT * FROM schemas WHERE id = ?').get(id) as
     | SchemaRow
     | undefined
@@ -174,7 +174,7 @@ function updateField(
   }
 }
 
-export function createSchema(input: SchemaInput): SchemaRecord {
+export function createSchema(input: SchemaInput): Schema {
   const id = randomUUID()
   const now = new Date().toISOString()
 
@@ -200,7 +200,7 @@ export function createSchema(input: SchemaInput): SchemaRecord {
   return getSchemaById(id)!
 }
 
-export function updateSchema(id: string, input: SchemaInput): SchemaRecord {
+export function updateSchema(id: string, input: SchemaInput): Schema {
   const existing = getSchemaById(id)
   if (!existing) throw new HttpError(404, 'Schema not found')
 

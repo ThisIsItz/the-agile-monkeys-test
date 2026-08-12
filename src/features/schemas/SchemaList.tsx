@@ -1,6 +1,6 @@
 import type { Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
-import { getSchemas } from '@server/schemas.api'
+import { getSchemas } from '@/api/schemas.ts'
 
 export const SchemaList = () => {
   const [schemas, setSchemas] = useState<Schema[]>([])

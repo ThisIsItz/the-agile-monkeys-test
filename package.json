@@ -21,6 +21,7 @@
     "better-sqlite3": "^11.9.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "lucide-react": "^1.31.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",

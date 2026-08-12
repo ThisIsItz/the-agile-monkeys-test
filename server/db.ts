@@ -2,10 +2,14 @@ import fs from 'node:fs'
 import path from 'node:path'
 import Database from 'better-sqlite3'
 
-const dataDir = path.join(import.meta.dirname, 'data')
-fs.mkdirSync(dataDir, { recursive: true })
+function resolveDbPath(): string {
+  if (process.env.DB_PATH) return process.env.DB_PATH
+  const dataDir = path.join(import.meta.dirname, 'data')
+  fs.mkdirSync(dataDir, { recursive: true })
+  return path.join(dataDir, 'cms.db')
+}
 
-export const db = new Database(path.join(dataDir, 'cms.db'))
+export const db = new Database(resolveDbPath())
 
 db.pragma('journal_mode = WAL')
 db.pragma('foreign_keys = ON')

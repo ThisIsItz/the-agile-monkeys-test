@@ -129,8 +129,8 @@ export const EntriesPage = () => {
       title: 'Delete entry',
       children: (
         <p>
-          Are you sure you want to delete "{entryLabel(entryToDelete)}"? This
-          action cannot be undone.
+          Are you sure you want to delete "{entryLabel(entryToDelete)}" entry?
+          This action cannot be undone.
         </p>
       ),
       labels: { confirm: 'Delete', cancel: 'Cancel' },

@@ -23,21 +23,6 @@ export const SchemaList = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const loadSchemas = async () => {
-      try {
-        const data = await getSchemas()
-        setSchemas(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadSchemas()
-  }, [])
-
   const handleDeleteSchema = async (schema: Schema) => {
     try {
       await deleteSchema(schema.id)
@@ -68,6 +53,21 @@ export const SchemaList = () => {
 
   const referenceTargetName = (targetId: string) =>
     schemas.find((schema) => schema.id === targetId)?.name ?? 'Unknown'
+
+  useEffect(() => {
+    const loadSchemas = async () => {
+      try {
+        const data = await getSchemas()
+        setSchemas(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadSchemas()
+  }, [])
 
   if (loading) return <Loader />
 

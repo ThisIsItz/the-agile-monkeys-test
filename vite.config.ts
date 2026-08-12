@@ -7,7 +7,26 @@ export default defineConfig({
   test: {
     env: {
       DB_PATH: ':memory:'
-    }
+    },
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'server',
+          environment: 'node',
+          include: ['server/**/*.test.ts']
+        }
+      },
+      {
+        extends: true,
+        test: {
+          name: 'client',
+          environment: 'jsdom',
+          include: ['src/**/*.test.{ts,tsx}'],
+          setupFiles: ['./src/test/setup.ts']
+        }
+      }
+    ]
   },
   resolve: {
     alias: {

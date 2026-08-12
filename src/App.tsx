@@ -21,13 +21,13 @@ function App() {
   }
 
   return (
-    <div>
+    <main className="app">
       {view.type === 'form' ? (
         <SchemaForm schema={view.schema} handleBack={handleBack} />
       ) : (
         <SchemaList handleAdd={handleAddSchema} handleEdit={handleEditSchema} />
       )}
-    </div>
+    </main>
   )
 }
 

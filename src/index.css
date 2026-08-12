@@ -8,6 +8,13 @@ body {
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
 .schema-form__error,
 .schema-list__error {
   color: var(--color-error);

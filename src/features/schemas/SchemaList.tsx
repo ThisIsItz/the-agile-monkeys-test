@@ -3,7 +3,17 @@ import { useEffect, useState } from 'react'
 import { deleteSchema, getSchemas } from '@/api/schemas.ts'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { Button, Card, Group, SimpleGrid, Stack, Text } from '@mantine/core'
+import {
+  Button,
+  Card,
+  Center,
+  Group,
+  SimpleGrid,
+  Stack,
+  Text,
+  Title
+} from '@mantine/core'
+import { Pencil, Trash2, Plus } from 'lucide-react'
 
 export const SchemaList = ({
   handleAdd,
@@ -66,10 +76,18 @@ export const SchemaList = ({
 
   return (
     <div>
-      <h1>Schemas</h1>
-      <button type="button" onClick={handleAdd}>
-        Add new schema
-      </button>
+      <Group justify="space-between" align="center" mb="xl">
+        <Title>Schemas</Title>
+        <Button
+          variant="filled"
+          color="violet"
+          onClick={handleAdd}
+          size="md"
+          leftSection={<Plus size={16} />}
+        >
+          Add schema
+        </Button>
+      </Group>
       {error && <p className="schema-list__error">{error}</p>}
 
       {schemas.length > 0 ? (
@@ -112,6 +130,7 @@ export const SchemaList = ({
                   size="xs"
                   variant="light"
                   onClick={() => handleEdit(schema)}
+                  leftSection={<Pencil size={16} />}
                 >
                   Edit
                 </Button>
@@ -120,6 +139,7 @@ export const SchemaList = ({
                   variant="light"
                   color="red"
                   onClick={() => openDeleteModal(schema)}
+                  leftSection={<Trash2 size={16} />}
                 >
                   Delete
                 </Button>
@@ -128,7 +148,9 @@ export const SchemaList = ({
           ))}
         </SimpleGrid>
       ) : (
-        <p>No schemas yet.</p>
+        <Center mih={200}>
+          <Text c="dimmed">No schemas yet.</Text>
+        </Center>
       )}
     </div>
   )

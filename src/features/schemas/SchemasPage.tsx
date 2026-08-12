@@ -1,5 +1,6 @@
 import type { Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { deleteSchema, getSchemas } from '@/api/schemas.ts'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
@@ -15,13 +16,8 @@ import {
 } from '@mantine/core'
 import { Pencil, Trash2, Plus } from 'lucide-react'
 
-export const SchemaList = ({
-  handleAdd,
-  handleEdit
-}: {
-  handleAdd: () => void
-  handleEdit: (schema: Schema) => void
-}) => {
+export const SchemaList = () => {
+  const navigate = useNavigate()
   const [schemas, setSchemas] = useState<Schema[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -81,7 +77,7 @@ export const SchemaList = ({
         <Button
           variant="filled"
           color="violet"
-          onClick={handleAdd}
+          onClick={() => navigate('/schemas/new')}
           size="md"
           leftSection={<Plus size={16} />}
         >
@@ -129,7 +125,7 @@ export const SchemaList = ({
                 <Button
                   size="xs"
                   variant="light"
-                  onClick={() => handleEdit(schema)}
+                  onClick={() => navigate(`/schemas/${schema.id}/edit`)}
                   leftSection={<Pencil size={16} />}
                 >
                   Edit

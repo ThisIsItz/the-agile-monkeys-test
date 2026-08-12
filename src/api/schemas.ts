@@ -12,6 +12,17 @@ export async function getSchemas(): Promise<Schema[]> {
   return schemasResponseSchema.parse(data)
 }
 
+export async function getSchema(id: string): Promise<Schema> {
+  const response = await fetch(`/api/schemas/${id}`)
+
+  if (!response.ok) {
+    throw new Error(`Error fetching schema: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return schemaSchema.parse(data)
+}
+
 export async function createSchema(schemaInput: SchemaInput): Promise<Schema> {
   const response = await fetch('/api/schemas', {
     method: 'POST',

@@ -1,32 +1,16 @@
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { SchemaList } from '@/features/schemas/SchemasPage.js'
-import { useState } from 'react'
-import { SchemaForm } from './features/schemas/SchemaEditorPage'
-import type { Schema } from '@shared/types'
-
-type View = { type: 'list' } | { type: 'form'; schema?: Schema }
+import { SchemaEditorPage } from './features/schemas/SchemaEditorPage'
 
 function App() {
-  const [view, setView] = useState<View>({ type: 'list' })
-
-  const handleAddSchema = () => {
-    setView({ type: 'form' })
-  }
-
-  const handleEditSchema = (schema: Schema) => {
-    setView({ type: 'form', schema })
-  }
-
-  const handleBack = () => {
-    setView({ type: 'list' })
-  }
-
   return (
     <main className="app">
-      {view.type === 'form' ? (
-        <SchemaForm schema={view.schema} handleBack={handleBack} />
-      ) : (
-        <SchemaList handleAdd={handleAddSchema} handleEdit={handleEditSchema} />
-      )}
+      <Routes>
+        <Route path="/" element={<Navigate to="/schemas" replace />} />
+        <Route path="/schemas" element={<SchemaList />} />
+        <Route path="/schemas/new" element={<SchemaEditorPage />} />
+        <Route path="/schemas/:id/edit" element={<SchemaEditorPage />} />
+      </Routes>
     </main>
   )
 }

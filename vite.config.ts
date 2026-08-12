@@ -15,5 +15,14 @@ export default defineConfig({
       '@shared': path.resolve(import.meta.dirname, 'shared'),
       '@server': path.resolve(import.meta.dirname, 'server')
     }
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   }
 })

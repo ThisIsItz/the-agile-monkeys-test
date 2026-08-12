@@ -14,6 +14,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mantine/core": "^9.5.1",
+    "@mantine/hooks": "^9.5.1",
+    "@mantine/notifications": "^9.5.1",
     "better-sqlite3": "^11.9.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",

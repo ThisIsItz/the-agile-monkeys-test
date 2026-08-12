@@ -20,8 +20,9 @@ export const EntriesPage = () => {
         if (!schemaId) return
         const [data, schema] = await Promise.all([
           getEntries(schemaId),
-          getSchema(schemaId).catch(() => null)
+          getSchema(schemaId)
         ])
+
         setEntries(data)
         if (schema) setSchemaName(schema.name)
       } catch (err) {

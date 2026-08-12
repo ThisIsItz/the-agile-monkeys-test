@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { deleteSchema, getSchemas } from '@/api/schemas.ts'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
+import { Button, Card, Group, SimpleGrid, Stack, Text } from '@mantine/core'
 
 export const SchemaList = ({
   handleAdd,
@@ -58,6 +59,9 @@ export const SchemaList = ({
       onConfirm: () => handleDeleteSchema(schema)
     })
 
+  const referenceTargetName = (targetId: string) =>
+    schemas.find((schema) => schema.id === targetId)?.name ?? 'Unknown'
+
   if (loading) return <div>Loading...</div>
 
   return (
@@ -69,36 +73,60 @@ export const SchemaList = ({
       {error && <p className="schema-list__error">{error}</p>}
 
       {schemas.length > 0 ? (
-        <ul>
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="md">
           {schemas.map((schema) => (
-            <li key={schema.id}>
-              <strong>{schema.name}</strong>
-              <button type="button" onClick={() => handleEdit(schema)}>
-                Edit
-              </button>
-              <button type="button" onClick={() => openDeleteModal(schema)}>
-                Delete
-              </button>
+            <Card
+              key={schema.id}
+              withBorder
+              padding="lg"
+              radius="md"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%'
+              }}
+            >
+              <Text fw={600} size="lg" mb="sm">
+                {schema.name}
+              </Text>
 
-              <ul>
+              <Stack gap={4}>
                 {schema.fields.map((field) => (
-                  <li key={field.id}>
-                    <span>{field.name}</span> <span>{field.type}</span>
+                  <Group key={field.id} gap="xs">
+                    <Text size="md" fw={500}>
+                      {field.name}
+                    </Text>
+                    <Text size="sm">{field.type}</Text>
                     {field.type === 'reference' &&
                       field.referenceTargetSchemaId && (
-                        <span>
-                          {schemas.find(
-                            (schema) =>
-                              schema.id === field.referenceTargetSchemaId
-                          )?.name ?? 'Unknown'}
-                        </span>
+                        <Text size="sm">
+                          → {referenceTargetName(field.referenceTargetSchemaId)}
+                        </Text>
                       )}
-                  </li>
+                  </Group>
                 ))}
-              </ul>
-            </li>
+              </Stack>
+
+              <Group justify="flex-end" gap="xs" mt="auto">
+                <Button
+                  size="xs"
+                  variant="light"
+                  onClick={() => handleEdit(schema)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="red"
+                  onClick={() => openDeleteModal(schema)}
+                >
+                  Delete
+                </Button>
+              </Group>
+            </Card>
           ))}
-        </ul>
+        </SimpleGrid>
       ) : (
         <p>No schemas yet.</p>
       )}

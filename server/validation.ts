@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { FIELD_TYPES } from '../shared/types.js'
-import type { Field, Schema } from '../shared/types.js'
-import { entryFieldValueSchema } from '../shared/validation.js'
+import { FIELD_TYPES } from '@shared/types.js'
+import type { Field, Schema } from '@shared/types.js'
+import { entryFieldValueSchema } from '@shared/validation.js'
 
 export const fieldInputSchema = z
   .object({

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildEntryDataSchema, schemaInputSchema } from './validation.js'
-import type { Schema } from '../shared/types.js'
+import type { Schema } from '@shared/types.js'
 
 const carSchema: Schema = {
   id: 'car-schema',
@@ -75,8 +75,13 @@ describe('schemaInputSchema', () => {
         { name: 'year', type: 'number', required: true },
         { name: 'available', type: 'boolean', required: false },
         { name: 'registeredAt', type: 'date', required: false },
-        { name: 'owner', type: 'reference', required: true, referenceTargetSchemaId: 'person-schema-id' },
-      ],
+        {
+          name: 'owner',
+          type: 'reference',
+          required: true,
+          referenceTargetSchemaId: 'person-schema-id'
+        }
+      ]
     })
 
     expect(result.success).toBe(true)
@@ -88,13 +93,15 @@ describe('schemaInputSchema', () => {
   it('rejects a reference field missing referenceTargetSchemaId', () => {
     const result = schemaInputSchema.safeParse({
       name: 'Car',
-      fields: [{ name: 'owner', type: 'reference', required: true }],
+      fields: [{ name: 'owner', type: 'reference', required: true }]
     })
 
     expect(result.success).toBe(false)
     if (!result.success) {
       expect(
-        result.error.issues.some((issue) => issue.message.includes('referenceTargetSchemaId is required')),
+        result.error.issues.some((issue) =>
+          issue.message.includes('referenceTargetSchemaId is required')
+        )
       ).toBe(true)
     }
   })
@@ -104,14 +111,17 @@ describe('schemaInputSchema', () => {
       name: 'Car',
       fields: [
         { name: 'Name', type: 'text', required: false },
-        { name: 'name', type: 'text', required: false },
-      ],
+        { name: 'name', type: 'text', required: false }
+      ]
     })
 
     expect(result.success).toBe(false)
     if (!result.success) {
       expect(
-        result.error.issues.some((issue) => issue.message === 'Field names must be unique within a schema'),
+        result.error.issues.some(
+          (issue) =>
+            issue.message === 'Field names must be unique within a schema'
+        )
       ).toBe(true)
     }
   })

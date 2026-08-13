@@ -73,3 +73,16 @@ export const fieldChangeImpactSchema = z.discriminatedUnion('changeType', [
 export const schemaPreviewResponseSchema = z.object({
   changes: z.array(fieldChangeImpactSchema)
 })
+
+export const schemaDeletionImpactSchema = z.object({
+  schemaId: z.string(),
+  affectedEntryIds: z.array(z.string()),
+  blockingReferences: z.array(
+    z.object({
+      schemaId: z.string(),
+      schemaName: z.string(),
+      fieldId: z.string(),
+      fieldName: z.string()
+    })
+  )
+})

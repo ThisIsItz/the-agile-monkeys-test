@@ -1,15 +1,22 @@
 import type {
   Schema,
+  SchemaDeletionImpact,
   SchemaInput,
   SchemaPreviewResponse
 } from '@shared/types.js'
 import {
+  schemaDeletionImpactSchema,
   schemaPreviewResponseSchema,
   schemaSchema,
   schemasResponseSchema
 } from '@shared/validation.js'
 import { apiFetch, throwApiError } from './client'
-import { apiSchemaPath, apiSchemaPreviewPath, apiSchemasPath } from './paths'
+import {
+  apiSchemaDeletePreviewPath,
+  apiSchemaPath,
+  apiSchemaPreviewPath,
+  apiSchemasPath
+} from './paths'
 
 export async function getSchemas(): Promise<Schema[]> {
   return apiFetch<Schema[]>(schemasResponseSchema, apiSchemasPath())
@@ -66,5 +73,14 @@ export async function previewSchemaChange(
       },
       body: JSON.stringify(schemaInput)
     }
+  )
+}
+
+export async function previewSchemaDeletion(
+  id: string
+): Promise<SchemaDeletionImpact> {
+  return apiFetch<SchemaDeletionImpact>(
+    schemaDeletionImpactSchema,
+    apiSchemaDeletePreviewPath(id)
   )
 }

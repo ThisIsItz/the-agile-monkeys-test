@@ -1,4 +1,8 @@
-import { deleteSchema, getSchemas } from '@/api/schemas.ts'
+import {
+  deleteSchema,
+  getSchemas,
+  previewSchemaDeletion
+} from '@/api/schemas.ts'
 import { confirmDelete } from '@/components/confirmDelete'
 import { EntityActions } from '@/components/EntityActions'
 import { ListPageHeader } from '@/components/ListPageHeader'
@@ -14,7 +18,7 @@ import {
   Text
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import type { Schema } from '@shared/types'
+import type { Schema, SchemaDeletionImpact } from '@shared/types'
 import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -23,12 +27,17 @@ import {
   entriesPath,
   schemaEditPath
 } from '@/features/routes/paths'
+import { SchemaDeletePreviewModal } from './SchemaDeletePreviewModal'
 
 export const SchemaList = () => {
   const navigate = useNavigate()
   const [schemas, setSchemas] = useState<Schema[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [schemaToDelete, setSchemaToDelete] = useState<Schema | null>(null)
+  const [deleteImpact, setDeleteImpact] = useState<SchemaDeletionImpact | null>(
+    null
+  )
 
   const handleDeleteSchema = async (schema: Schema) => {
     try {
@@ -44,12 +53,16 @@ export const SchemaList = () => {
     }
   }
 
-  const openDeleteModal = (schema: Schema) =>
-    confirmDelete({
-      title: 'Delete schema',
-      message: `Are you sure you want to delete the schema "${schema.name}"? This action cannot be undone.`,
-      onConfirm: () => handleDeleteSchema(schema)
-    })
+  const openDeleteModal = async (schema: Schema) => {
+    try {
+      const impact = await previewSchemaDeletion(schema.id)
+
+      setSchemaToDelete(schema)
+      setDeleteImpact(impact)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    }
+  }
 
   const referenceTargetName = (targetId: string) =>
     schemas.find((schema) => schema.id === targetId)?.name ?? 'Unknown'
@@ -92,7 +105,6 @@ export const SchemaList = () => {
         onAction={() => navigate(NEW_SCHEMA_ROUTE)}
       />
       {error && <p className="schema-list__error">{error}</p>}
-
       {schemas.length > 0 ? (
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="md">
           {schemas.map((schema) => (
@@ -151,6 +163,23 @@ export const SchemaList = () => {
           <Text c="dimmed">No schemas yet.</Text>
         </Center>
       )}
+      <SchemaDeletePreviewModal
+        opened={Boolean(schemaToDelete && deleteImpact)}
+        schema={schemaToDelete}
+        impact={deleteImpact}
+        onClose={() => {
+          setSchemaToDelete(null)
+          setDeleteImpact(null)
+        }}
+        onConfirm={async () => {
+          if (!schemaToDelete) return
+
+          await handleDeleteSchema(schemaToDelete)
+
+          setSchemaToDelete(null)
+          setDeleteImpact(null)
+        }}
+      />
     </div>
   )
 }

@@ -16,3 +16,6 @@ export function apiEntryPath(schemaId: string, id: string): string {
 
 export const apiSchemaPreviewPath = (id: string) =>
   `${apiSchemaPath(id)}/preview`
+
+export const apiSchemaDeletePreviewPath = (id: string) =>
+  `${apiSchemaPath(id)}/delete-preview`

@@ -151,4 +151,57 @@ describe('EntryEditor', () => {
 
     expect(await screen.findByText('Alice')).toBeTruthy()
   })
+
+  it('normalizes a cleared optional number field to null instead of ""', async () => {
+    const carSchemaWithYear: Schema = {
+      id: 'car-1',
+      name: 'Car',
+      fields: [
+        {
+          id: 'c-year',
+          schemaId: 'car-1',
+          name: 'year',
+          type: 'number',
+          required: false,
+          referenceTargetSchemaId: null,
+          position: 0,
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdAt: '',
+      updatedAt: ''
+    }
+    const existingEntry: Entry = {
+      id: 'car-entry-1',
+      schemaId: 'car-1',
+      data: { 'c-year': 1993 },
+      createdAt: '',
+      updatedAt: ''
+    }
+    vi.mocked(entriesApi.updateEntry).mockResolvedValue(existingEntry)
+    const user = userEvent.setup()
+
+    renderWithProviders(
+      <EntryEditor
+        schema={carSchemaWithYear}
+        entry={existingEntry}
+        handleBack={vi.fn()}
+        handleSaved={vi.fn()}
+        reviewFields={[]}
+      />
+    )
+
+    const yearInput = await screen.findByDisplayValue('1993')
+    await user.clear(yearInput)
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() =>
+      expect(entriesApi.updateEntry).toHaveBeenCalledWith(
+        'car-1',
+        'car-entry-1',
+        { data: { 'c-year': null } }
+      )
+    )
+  })
 })

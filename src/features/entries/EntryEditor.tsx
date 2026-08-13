@@ -6,6 +6,7 @@ import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EntryFieldInput } from './EntryFieldInput'
 import { isFieldFlagged, type NeedsReviewItem } from './needsReview'
+import { normalizeEntryData } from './normalizeEntryData'
 import { getReferenceOptions } from './referenceOptions'
 
 const getEntryInitialValues = (schema: Schema, entry?: Entry): EntryInput => ({
@@ -40,12 +41,15 @@ export const EntryEditor = ({
 
   const handleFormSubmit = async (values: EntryInput) => {
     setError(null)
+    const normalizedValues: EntryInput = {
+      data: normalizeEntryData(schema, values.data)
+    }
 
     try {
       if (entry) {
-        await updateEntry(schema.id, entry.id, values)
+        await updateEntry(schema.id, entry.id, normalizedValues)
       } else {
-        await createEntry(schema.id, values)
+        await createEntry(schema.id, normalizedValues)
       }
 
       handleSaved()

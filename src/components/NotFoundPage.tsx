@@ -1,6 +1,7 @@
 import { Button, Center, Stack, Title, Text } from '@mantine/core'
 import { FileQuestion, House } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { SCHEMAS_ROUTE } from '@/features/routes/paths'
 
 export const NotFoundPage = () => {
   const navigate = useNavigate()
@@ -28,7 +29,7 @@ export const NotFoundPage = () => {
           color="violet"
           mt={24}
           leftSection={<House size={18} />}
-          onClick={() => navigate('/schemas')}
+          onClick={() => navigate(SCHEMAS_ROUTE)}
         >
           Back to schemas
         </Button>

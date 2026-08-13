@@ -9,6 +9,7 @@ import { EntryEditor } from './EntryEditor'
 import { getSchema } from '@/api/schemas'
 import { NotFoundPage } from '@/components/NotFoundPage'
 import { ApiError } from '@/api/client'
+import { entriesPath } from '@/features/routes/paths'
 
 export const EntryEditorPage = () => {
   const { entryId, schemaId } = useParams<{
@@ -23,7 +24,7 @@ export const EntryEditorPage = () => {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const handleBack = () => navigate(`/schemas/${schemaId}/entries`)
+  const handleBack = () => navigate(entriesPath(schemaId!))
 
   useRealtimeEvent<{ schemaId: string }>('schemas:changed', (payload) => {
     if (payload.schemaId === schemaId) setSchemaChanged(true)

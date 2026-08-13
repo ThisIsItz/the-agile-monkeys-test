@@ -1,48 +1,28 @@
 import type { Schema, SchemaInput } from '@shared/types.js'
 import { schemaSchema, schemasResponseSchema } from '@shared/validation.js'
-import { throwApiError } from './client'
+import { apiFetch, throwApiError } from './client'
+import { apiSchemaPath, apiSchemasPath } from './paths'
 
 export async function getSchemas(): Promise<Schema[]> {
-  const response = await fetch('/api/schemas')
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return schemasResponseSchema.parse(data)
+  return apiFetch<Schema[]>(schemasResponseSchema, apiSchemasPath())
 }
 
 export async function getSchema(id: string): Promise<Schema> {
-  const response = await fetch(`/api/schemas/${id}`)
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return schemaSchema.parse(data)
+  return apiFetch<Schema>(schemaSchema, apiSchemaPath(id))
 }
 
 export async function createSchema(schemaInput: SchemaInput): Promise<Schema> {
-  const response = await fetch('/api/schemas', {
+  return apiFetch<Schema>(schemaSchema, apiSchemasPath(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(schemaInput)
   })
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return schemaSchema.parse(data)
 }
 
 export async function deleteSchema(id: string): Promise<void> {
-  const response = await fetch(`/api/schemas/${id}`, {
+  const response = await fetch(apiSchemaPath(id), {
     method: 'DELETE'
   })
 
@@ -55,18 +35,11 @@ export async function updateSchema(
   id: string,
   schemaInput: SchemaInput
 ): Promise<Schema> {
-  const response = await fetch(`/api/schemas/${id}`, {
+  return apiFetch<Schema>(schemaSchema, apiSchemaPath(id), {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(schemaInput)
   })
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return schemaSchema.parse(data)
 }

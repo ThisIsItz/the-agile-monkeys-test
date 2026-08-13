@@ -18,6 +18,25 @@ import { FIELD_TYPES, type Schema, type SchemaInput } from '@shared/types'
 import { ArrowLeft, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+const getSchemaInitialValues = (schema?: Schema): SchemaInput => ({
+  name: schema?.name ?? '',
+  fields: schema?.fields.map(
+    ({ id, name, type, required, referenceTargetSchemaId }) => ({
+      id,
+      name,
+      type,
+      required,
+      referenceTargetSchemaId
+    })
+  ) ?? [
+    {
+      name: '',
+      type: 'text',
+      required: false
+    }
+  ]
+})
+
 export const SchemaEditor = ({
   schema,
   handleBack
@@ -27,25 +46,9 @@ export const SchemaEditor = ({
 }) => {
   const [availableSchemas, setAvailableSchemas] = useState<Schema[]>([])
   const [error, setError] = useState<string | null>(null)
+
   const schemaForm = useForm<SchemaInput>({
-    initialValues: {
-      name: schema?.name ?? '',
-      fields: schema?.fields.map(
-        ({ id, name, type, required, referenceTargetSchemaId }) => ({
-          id,
-          name,
-          type,
-          required,
-          referenceTargetSchemaId
-        })
-      ) ?? [
-        {
-          name: '',
-          type: 'text',
-          required: false
-        }
-      ]
-    },
+    initialValues: getSchemaInitialValues(schema),
     validate: {
       fields: (value) =>
         value.length === 0 ? 'At least one field is required' : null

@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { SchemaEditor } from './SchemaEditor'
 import { ApiError } from '@/api/client'
 import { NotFoundPage } from '@/components/NotFoundPage'
+import { SCHEMAS_ROUTE } from '@/features/routes/paths'
 
 export const SchemaEditorPage = () => {
   const { id } = useParams<{ id: string }>()
@@ -17,7 +18,7 @@ export const SchemaEditorPage = () => {
   const [loading, setLoading] = useState(Boolean(id))
   const [error, setError] = useState<Error | null>(null)
 
-  const handleBack = () => navigate('/schemas')
+  const handleBack = () => navigate(SCHEMAS_ROUTE)
 
   useRealtimeEvent<{ schemaId: string }>('schemas:changed', (payload) => {
     if (id && payload.schemaId === id) setSchemaChanged(true)

@@ -1,51 +1,31 @@
 import type { Entry, EntryInput } from '@shared/types.js'
 import { entriesResponseSchema, entrySchema } from '@shared/validation.js'
-import { throwApiError } from './client'
+import { apiFetch, throwApiError } from './client'
+import { apiEntriesPath, apiEntryPath } from './paths'
 
 export async function getEntries(schemaId: string): Promise<Entry[]> {
-  const response = await fetch(`/api/schemas/${schemaId}/entries`)
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return entriesResponseSchema.parse(data)
+  return apiFetch<Entry[]>(entriesResponseSchema, apiEntriesPath(schemaId))
 }
 
 export async function getEntry(schemaId: string, id: string): Promise<Entry> {
-  const response = await fetch(`/api/schemas/${schemaId}/entries/${id}`)
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return entrySchema.parse(data)
+  return apiFetch<Entry>(entrySchema, apiEntryPath(schemaId, id))
 }
 
 export async function createEntry(
   schemaId: string,
   entryInput: EntryInput
 ): Promise<Entry> {
-  const response = await fetch(`/api/schemas/${schemaId}/entries`, {
+  return apiFetch<Entry>(entrySchema, apiEntriesPath(schemaId), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(entryInput)
   })
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return entrySchema.parse(data)
 }
 
 export async function deleteEntry(schemaId: string, id: string): Promise<void> {
-  const response = await fetch(`/api/schemas/${schemaId}/entries/${id}`, {
+  const response = await fetch(apiEntryPath(schemaId, id), {
     method: 'DELETE'
   })
 
@@ -59,18 +39,11 @@ export async function updateEntry(
   id: string,
   entryInput: EntryInput
 ): Promise<Entry> {
-  const response = await fetch(`/api/schemas/${schemaId}/entries/${id}`, {
+  return apiFetch<Entry>(entrySchema, apiEntryPath(schemaId, id), {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(entryInput)
   })
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return entrySchema.parse(data)
 }

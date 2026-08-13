@@ -27,10 +27,6 @@ export const SchemaChangePreviewModal = ({
   onConfirm: () => void
   preview: SchemaPreviewResponse | null
 }) => {
-  const affectedEntries = new Set(
-    preview?.changes.flatMap((change) => change.affectedEntryIds) ?? []
-  ).size
-
   return (
     <Modal
       opened={opened}
@@ -67,12 +63,10 @@ export const SchemaChangePreviewModal = ({
             </Stack>
           ))}
         </Stack>
-
         <Group justify="flex-end">
           <Button variant="default" onClick={onClose}>
-            Cancel
+            Back to editing
           </Button>
-
           <Button onClick={onConfirm}>Apply changes</Button>
         </Group>
       </Stack>

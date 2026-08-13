@@ -1,6 +1,7 @@
 import { createSchema } from '@server/schemas/schemas.repository.js'
 import { createEntry } from '@server/entries/entries.repository.js'
 import { getMetadata, setMetadata } from './metadata.repository.js'
+import { db } from './db.js'
 import type { Schema } from '@shared/types.js'
 
 const INITIAL_SEED_KEY = 'initial_seed_completed'
@@ -18,6 +19,10 @@ export function seedInitialData(): void {
     return
   }
 
+  db.transaction(seedInitialDataWithinTransaction)()
+}
+
+function seedInitialDataWithinTransaction(): void {
   const authorSchema = createSchema({
     name: 'Author',
     fields: [

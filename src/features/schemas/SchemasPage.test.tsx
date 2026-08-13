@@ -55,6 +55,7 @@ const carSchema: Schema = {
 describe('SchemaList', () => {
   beforeEach(() => {
     vi.mocked(schemasApi.getSchemas).mockResolvedValue([personSchema, carSchema])
+    vi.mocked(schemasApi.deleteSchema).mockClear()
     vi.mocked(socket.on).mockClear()
     vi.mocked(socket.off).mockClear()
   })
@@ -116,10 +117,10 @@ describe('SchemaList', () => {
     const deleteButtons = screen.getAllByRole('button', { name: 'Delete' })
     await user.click(deleteButtons[0])
 
-    const confirmButton = await screen.findByRole('button', {
+    const confirmButton = (await screen.findByRole('button', {
       name: 'Delete schema'
-    })
-    expect(confirmButton).toBeDisabled()
+    })) as HTMLButtonElement
+    expect(confirmButton.disabled).toBe(true)
     expect(schemasApi.deleteSchema).not.toHaveBeenCalled()
   })
 

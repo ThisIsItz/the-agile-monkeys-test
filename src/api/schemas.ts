@@ -1,44 +1,23 @@
 import type { Schema, SchemaInput } from '@shared/types.js'
 import { schemaSchema, schemasResponseSchema } from '@shared/validation.js'
-import { throwApiError } from './client'
+import { apiFetch, throwApiError } from './client'
 
 export async function getSchemas(): Promise<Schema[]> {
-  const response = await fetch('/api/schemas')
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return schemasResponseSchema.parse(data)
+  return apiFetch<Schema[]>(schemasResponseSchema, '/api/schemas')
 }
 
 export async function getSchema(id: string): Promise<Schema> {
-  const response = await fetch(`/api/schemas/${id}`)
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return schemaSchema.parse(data)
+  return apiFetch<Schema>(schemaSchema, `/api/schemas/${id}`)
 }
 
 export async function createSchema(schemaInput: SchemaInput): Promise<Schema> {
-  const response = await fetch('/api/schemas', {
+  return apiFetch<Schema>(schemaSchema, '/api/schemas', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(schemaInput)
   })
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return schemaSchema.parse(data)
 }
 
 export async function deleteSchema(id: string): Promise<void> {
@@ -55,18 +34,11 @@ export async function updateSchema(
   id: string,
   schemaInput: SchemaInput
 ): Promise<Schema> {
-  const response = await fetch(`/api/schemas/${id}`, {
+  return apiFetch<Schema>(schemaSchema, `/api/schemas/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(schemaInput)
   })
-
-  if (!response.ok) {
-    await throwApiError(response)
-  }
-
-  const data = await response.json()
-  return schemaSchema.parse(data)
 }

@@ -205,7 +205,8 @@ export const SchemaEditor = ({
                         placeholder="Enter field name"
                         {...schemaForm.getInputProps(`fields.${index}.name`)}
                         required
-                        style={{ flex: 1, minWidth: 160 }}
+                        flex={1}
+                        miw={160}
                       />
                       <Select
                         label="Type"
@@ -269,14 +270,11 @@ export const SchemaEditor = ({
                 </Group>
               </Stack>
             </div>
-            <Button
-              type="submit"
-              size="md"
-              loading={schemaForm.submitting}
-              style={{ alignSelf: 'flex-end' }}
-            >
-              {schema ? 'Save changes' : 'Create schema'}
-            </Button>
+            <Group justify="flex-end">
+              <Button type="submit" size="md" loading={schemaForm.submitting}>
+                {schema ? 'Save changes' : 'Create schema'}
+              </Button>
+            </Group>
           </Stack>
         </FormCard>
       </form>

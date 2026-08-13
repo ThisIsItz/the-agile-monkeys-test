@@ -94,18 +94,17 @@ export const SchemaChangePreviewModal = ({
                 </Text>
                 {change.affectedEntries.length > 0 && (
                   <>
-                    <UnstyledButton
-                      onClick={() => toggleExpanded(key)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 4 }}
-                    >
-                      {isExpanded ? (
-                        <ChevronDown size={14} />
-                      ) : (
-                        <ChevronRight size={14} />
-                      )}
-                      <Text size="xs" c="dimmed">
-                        {isExpanded ? 'Hide' : 'Show'} affected entries
-                      </Text>
+                    <UnstyledButton onClick={() => toggleExpanded(key)}>
+                      <Group gap={4} wrap="nowrap">
+                        {isExpanded ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        )}
+                        <Text size="xs" c="dimmed">
+                          {isExpanded ? 'Hide' : 'Show'} affected entries
+                        </Text>
+                      </Group>
                     </UnstyledButton>
                     <Collapse expanded={isExpanded}>
                       <Stack gap={2} pl="lg">

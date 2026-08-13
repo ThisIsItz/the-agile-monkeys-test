@@ -22,3 +22,13 @@ body {
 .entry-field-input__review-note {
   color: var(--mantine-color-orange-6);
 }
+
+.schema-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.schema-card__actions {
+  margin-top: auto;
+}

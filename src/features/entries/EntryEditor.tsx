@@ -1,6 +1,6 @@
 import { createEntry, updateEntry } from '@/api/entries'
 import { FormCard } from '@/components/FormCard'
-import { Alert, Button, Stack } from '@mantine/core'
+import { Alert, Button, Group, Stack } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import type { Entry, EntryInput, Field, Schema } from '@shared/types'
 import { TriangleAlert } from 'lucide-react'
@@ -92,13 +92,11 @@ export const EntryEditor = ({
                 />
               )
             })}
-            <Button
-              type="submit"
-              loading={entryForm.submitting}
-              style={{ alignSelf: 'flex-end' }}
-            >
-              {entry ? 'Save changes' : 'Create entry'}
-            </Button>
+            <Group justify="flex-end">
+              <Button type="submit" loading={entryForm.submitting}>
+                {entry ? 'Save changes' : 'Create entry'}
+              </Button>
+            </Group>
           </Stack>
         </FormCard>
       </form>

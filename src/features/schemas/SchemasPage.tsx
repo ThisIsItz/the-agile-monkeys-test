@@ -113,11 +113,7 @@ export const SchemaList = () => {
               withBorder
               padding="lg"
               radius="md"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%'
-              }}
+              className="schema-card"
             >
               <Group justify="space-between" align="center" mb="md">
                 <Text fw={600} size="lg">
@@ -153,7 +149,7 @@ export const SchemaList = () => {
                 ))}
               </Stack>
 
-              <div style={{ marginTop: 'auto' }}>
+              <div className="schema-card__actions">
                 <EntityActions
                   onEdit={() => navigate(schemaEditPath(schema.id))}
                   onDelete={() => openDeleteModal(schema)}

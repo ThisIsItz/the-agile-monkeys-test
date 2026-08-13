@@ -171,6 +171,14 @@ export const EntriesPage = () => {
                         >
                           {referenceLabels[String(value)] ?? String(value)}
                         </Anchor>
+                      ) : field.type === 'boolean' ? (
+                        <Badge
+                          color={value ? 'green' : 'gray'}
+                          variant="light"
+                          size="sm"
+                        >
+                          {value ? 'True' : 'False'}
+                        </Badge>
                       ) : (
                         String(value)
                       )}

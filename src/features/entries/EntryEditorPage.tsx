@@ -1,7 +1,7 @@
 import { getEntry } from '@/api/entries'
 import { ReloadWarning } from '@/components/ReloadWarning'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
-import { Loader } from '@mantine/core'
+import { Button, Loader, Title } from '@mantine/core'
 import { type Entry, type Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -11,6 +11,7 @@ import { NotFoundPage } from '@/components/NotFoundPage'
 import { ApiError } from '@/api/client'
 import { entriesPath } from '@/features/routes/paths'
 import { getNeedsReview, withoutEntry } from './needsReview'
+import { ArrowLeft } from 'lucide-react'
 
 export const EntryEditorPage = () => {
   const { entryId, schemaId } = useParams<{
@@ -108,6 +109,15 @@ export const EntryEditorPage = () => {
 
   return (
     <div>
+      <Button
+        variant="subtle"
+        onClick={handleBack}
+        leftSection={<ArrowLeft size={16} />}
+        color="gray"
+      >
+        Back
+      </Button>
+      <Title>{entry ? 'Edit Entry' : 'Create Entry'}</Title>
       {schemaChanged && (
         <ReloadWarning
           title="This schema was changed"
@@ -126,7 +136,6 @@ export const EntryEditorPage = () => {
         key={`${schema.updatedAt}-${entry?.updatedAt ?? 'new'}`}
         entry={entry}
         schema={schema}
-        handleBack={handleBack}
         handleSaved={handleSaved}
         reviewFields={reviewFields}
       />

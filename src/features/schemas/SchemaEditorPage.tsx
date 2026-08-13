@@ -1,7 +1,7 @@
 import { getSchema } from '@/api/schemas'
 import { ReloadWarning } from '@/components/ReloadWarning'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
-import { Loader } from '@mantine/core'
+import { Button, Loader, Title } from '@mantine/core'
 import { type Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -9,6 +9,7 @@ import { SchemaEditor } from './SchemaEditor'
 import { ApiError } from '@/api/client'
 import { NotFoundPage } from '@/components/NotFoundPage'
 import { SCHEMAS_ROUTE } from '@/features/routes/paths'
+import { ArrowLeft } from 'lucide-react'
 
 export const SchemaEditorPage = () => {
   const { id } = useParams<{ id: string }>()
@@ -61,6 +62,15 @@ export const SchemaEditorPage = () => {
 
   return (
     <div>
+      <Button
+        variant="subtle"
+        onClick={handleBack}
+        leftSection={<ArrowLeft size={16} />}
+        color="gray"
+      >
+        Back
+      </Button>
+      <Title>{schema ? 'Edit Schema' : 'Create Schema'}</Title>
       {schemaChanged && (
         <ReloadWarning
           title="This schema was changed"

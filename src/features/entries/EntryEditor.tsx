@@ -1,8 +1,8 @@
 import { createEntry, updateEntry } from '@/api/entries'
-import { Alert, Button, Stack, Title } from '@mantine/core'
+import { Alert, Button, Card, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import type { Entry, EntryInput, Field, Schema } from '@shared/types'
-import { ArrowLeft, TriangleAlert } from 'lucide-react'
+import { TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EntryFieldInput } from './EntryFieldInput'
 import { isFieldFlagged, type NeedsReviewItem } from './needsReview'
@@ -21,13 +21,11 @@ const getEntryInitialValues = (schema: Schema, entry?: Entry): EntryInput => ({
 export const EntryEditor = ({
   entry,
   schema,
-  handleBack,
   handleSaved,
   reviewFields
 }: {
   entry?: Entry
   schema: Schema
-  handleBack: () => void
   handleSaved: () => void
   reviewFields: NeedsReviewItem[]
 }) => {
@@ -72,39 +70,39 @@ export const EntryEditor = ({
 
   return (
     <div>
-      <Button
-        variant="subtle"
-        onClick={handleBack}
-        leftSection={<ArrowLeft size={16} />}
-        color="gray"
-      >
-        Back
-      </Button>
-      <Title>{entry ? 'Edit Entry' : 'Create Entry'}</Title>
       {error && (
         <Alert color="red" mt="md" icon={<TriangleAlert size={16} />}>
           {error.message}
         </Alert>
       )}
       <form onSubmit={entryForm.onSubmit(handleFormSubmit)}>
-        <Stack mt="md">
-          {schema.fields.map((field) => {
-            const needsReview = isFieldFlagged(reviewFields, field)
+        <Card withBorder radius="sm" padding="lg" maw={640} mx="auto" mt="md">
+          <Title order={3} mb="md">
+            {schema.name}
+          </Title>
+          <Stack gap="md">
+            {schema.fields.map((field) => {
+              const needsReview = isFieldFlagged(reviewFields, field)
 
-            return (
-              <EntryFieldInput
-                key={field.id}
-                field={field}
-                form={entryForm}
-                referenceOptions={referenceOptions[field.id] ?? []}
-                needsReview={needsReview}
-              />
-            )
-          })}
-          <Button type="submit" loading={entryForm.submitting}>
-            {entry ? 'Save changes' : 'Create entry'}
-          </Button>
-        </Stack>
+              return (
+                <EntryFieldInput
+                  key={field.id}
+                  field={field}
+                  form={entryForm}
+                  referenceOptions={referenceOptions[field.id] ?? []}
+                  needsReview={needsReview}
+                />
+              )
+            })}
+            <Button
+              type="submit"
+              loading={entryForm.submitting}
+              style={{ alignSelf: 'flex-end' }}
+            >
+              {entry ? 'Save changes' : 'Create entry'}
+            </Button>
+          </Stack>
+        </Card>
       </form>
     </div>
   )

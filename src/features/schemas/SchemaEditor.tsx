@@ -4,6 +4,8 @@ import {
   previewSchemaChange,
   updateSchema
 } from '@/api/schemas'
+import { needsReviewFromPreview } from '@/features/entries/needsReview'
+import { entriesPath } from '@/features/routes/paths'
 import {
   ActionIcon,
   Alert,
@@ -25,11 +27,9 @@ import {
   type SchemaInput,
   type SchemaPreviewResponse
 } from '@shared/types'
-import { ArrowLeft, Plus, Trash2, TriangleAlert } from 'lucide-react'
+import { Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { entriesPath } from '@/features/routes/paths'
-import { needsReviewFromPreview } from '@/features/entries/needsReview'
 import { SchemaChangePreviewModal } from './SchemaChangePreviewModal'
 
 const getSchemaInitialValues = (schema?: Schema): SchemaInput => ({
@@ -163,15 +163,6 @@ export const SchemaEditor = ({
 
   return (
     <div>
-      <Button
-        variant="subtle"
-        onClick={handleBack}
-        leftSection={<ArrowLeft size={16} />}
-        color="gray"
-      >
-        Back
-      </Button>
-      <Title>{schema ? 'Edit Schema' : 'Create Schema'}</Title>
       {error && (
         <Alert color="red" mt="md" icon={<TriangleAlert size={16} />}>
           {error}
@@ -187,108 +178,110 @@ export const SchemaEditor = ({
         preview={preview}
       />
       <form onSubmit={schemaForm.onSubmit(handleFormSubmit)}>
-        <TextInput
-          {...schemaForm.getInputProps('name')}
-          label="Schema Name"
-          placeholder="Enter schema name"
-          mt="md"
-          mb="xs"
-          radius="sm"
-          maw={400}
-          required
-        />
-        <div>
-          <Text size="sm" fw={600}>
-            Fields
-          </Text>
-          {schemaForm.errors.fields && (
-            <Text size="xs" c="red">
-              {schemaForm.errors.fields}
-            </Text>
-          )}
-          <Stack gap="md">
-            {schemaForm.values.fields.map((field, index) => (
-              <Card
-                key={schemaForm.key(`fields.${index}`)}
-                withBorder
-                padding="md"
-                w="fit-content"
-              >
-                <Group align="flex-end" wrap="wrap">
-                  <TextInput
-                    label="Name"
-                    placeholder="Enter field name"
-                    {...schemaForm.getInputProps(`fields.${index}.name`)}
-                    required
-                    w={400}
-                  />
-                  <Select
-                    label="Type"
-                    data={fieldTypeOptions}
-                    {...schemaForm.getInputProps(`fields.${index}.type`)}
-                    w={180}
-                  />
-                  {field.type === 'reference' && (
-                    <Select
-                      label="Reference"
-                      placeholder="Select schema"
-                      data={referenceTargetOptions.map((availableSchema) => ({
-                        value: availableSchema.id,
-                        label: availableSchema.name
-                      }))}
-                      disabled={!hasReferenceTargets}
-                      {...schemaForm.getInputProps(
-                        `fields.${index}.referenceTargetSchemaId`
+        <Card withBorder radius="sm" padding="lg" maw={640} mx="auto" mt="md">
+          <Title order={3} mb="md">
+            {schema ? schema.name : 'New schema'}
+          </Title>
+          <Stack gap="lg">
+            <TextInput
+              {...schemaForm.getInputProps('name')}
+              label="Schema Name"
+              placeholder="Enter schema name"
+              radius="sm"
+              required
+            />
+            <div>
+              <Text size="sm" fw={600} mb="xs">
+                Fields
+              </Text>
+              {schemaForm.errors.fields && (
+                <Text size="xs" c="red" mb="xs">
+                  {schemaForm.errors.fields}
+                </Text>
+              )}
+              <Stack gap="sm">
+                {schemaForm.values.fields.map((field, index) => (
+                  <Card key={schemaForm.key(`fields.${index}`)} withBorder padding="sm" radius="sm">
+                    <Group align="flex-end" gap="sm" wrap="wrap">
+                      <TextInput
+                        label="Name"
+                        placeholder="Enter field name"
+                        {...schemaForm.getInputProps(`fields.${index}.name`)}
+                        required
+                        style={{ flex: 1, minWidth: 160 }}
+                      />
+                      <Select
+                        label="Type"
+                        data={fieldTypeOptions}
+                        {...schemaForm.getInputProps(`fields.${index}.type`)}
+                        w={160}
+                      />
+                      {field.type === 'reference' && (
+                        <Select
+                          label="Reference"
+                          placeholder="Select schema"
+                          data={referenceTargetOptions.map((availableSchema) => ({
+                            value: availableSchema.id,
+                            label: availableSchema.name
+                          }))}
+                          disabled={!hasReferenceTargets}
+                          {...schemaForm.getInputProps(
+                            `fields.${index}.referenceTargetSchemaId`
+                          )}
+                          w={160}
+                          required
+                        />
                       )}
-                      w={180}
-                      required
-                    />
-                  )}
-                  <Checkbox
-                    label="Is required"
-                    mb={10}
-                    {...schemaForm.getInputProps(`fields.${index}.required`, {
-                      type: 'checkbox'
-                    })}
-                  />
-                  <ActionIcon
-                    variant="light"
-                    color="red"
-                    size="lg"
-                    mb={4}
-                    aria-label="Remove field"
-                    disabled={schemaForm.values.fields.length === 1}
-                    onClick={() => schemaForm.removeListItem('fields', index)}
-                  >
-                    <Trash2 size={18} />
-                  </ActionIcon>
-                </Group>
-              </Card>
-            ))}
+                      <Checkbox
+                        label="Is required"
+                        mb={10}
+                        {...schemaForm.getInputProps(`fields.${index}.required`, {
+                          type: 'checkbox'
+                        })}
+                      />
+                      <ActionIcon
+                        variant="light"
+                        color="red"
+                        size="lg"
+                        mb={4}
+                        aria-label="Remove field"
+                        disabled={schemaForm.values.fields.length === 1}
+                        onClick={() => schemaForm.removeListItem('fields', index)}
+                      >
+                        <Trash2 size={18} />
+                      </ActionIcon>
+                    </Group>
+                  </Card>
+                ))}
 
-            <Group justify="text-start">
-              <Button
-                size="xs"
-                variant="subtle"
-                leftSection={<Plus size={14} />}
-                onClick={() =>
-                  schemaForm.insertListItem('fields', {
-                    name: '',
-                    type: 'text',
-                    required: false
-                  })
-                }
-              >
-                Add field
-              </Button>
-            </Group>
+                <Group justify="flex-start">
+                  <Button
+                    size="xs"
+                    variant="subtle"
+                    leftSection={<Plus size={14} />}
+                    onClick={() =>
+                      schemaForm.insertListItem('fields', {
+                        name: '',
+                        type: 'text',
+                        required: false
+                      })
+                    }
+                  >
+                    Add field
+                  </Button>
+                </Group>
+              </Stack>
+            </div>
+            <Button
+              type="submit"
+              size="md"
+              loading={schemaForm.submitting}
+              style={{ alignSelf: 'flex-end' }}
+            >
+              {schema ? 'Save changes' : 'Create schema'}
+            </Button>
           </Stack>
-        </div>
-        <Group justify="flex-end" mt="xl">
-          <Button type="submit" size="md" loading={schemaForm.submitting}>
-            {schema ? 'Save changes' : 'Create schema'}
-          </Button>
-        </Group>
+        </Card>
       </form>
     </div>
   )

@@ -1,6 +1,7 @@
 import {
   getEntryById,
-  listEntries
+  listEntries,
+  overwriteEntryData
 } from '@server/entries/entries.repository.js'
 import { listSchemas } from '@server/schemas/schemas.repository.js'
 import type {
@@ -8,6 +9,7 @@ import type {
   Entry,
   EntryFieldValue,
   FieldInput,
+  FieldType,
   Schema,
   SchemaInput
 } from '@shared/types.js'
@@ -99,6 +101,27 @@ function hasValue(
   return value !== null && value !== undefined
 }
 
+function toSafeNumber(value: string): number | undefined {
+  const trimmed = value.trim()
+  if (trimmed === '') return undefined
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function convertValueForMigration(
+  before: FieldType,
+  after: FieldType,
+  value: EntryFieldValue
+): EntryFieldValue | undefined {
+  if (before === 'text' && after === 'number' && typeof value === 'string') {
+    return toSafeNumber(value)
+  }
+  if (after === 'text' && before === 'number' && typeof value === 'number') {
+    return String(value)
+  }
+  return undefined
+}
+
 function isValueValidForField(
   field: Pick<FieldInput, 'type' | 'required' | 'referenceTargetSchemaId'>,
   value: EntryFieldValue | undefined
@@ -110,6 +133,14 @@ function isValueValidForField(
       return false
     }
     return getEntryById(field.referenceTargetSchemaId, value) !== undefined
+  }
+
+  if (field.type === 'number' && typeof value === 'string') {
+    return toSafeNumber(value) !== undefined
+  }
+
+  if (field.type === 'text' && typeof value === 'number') {
+    return true
   }
 
   return fieldValueSchema(field).safeParse(value).success
@@ -202,6 +233,42 @@ export function findAffectedEntries(
         }
     }
   })
+}
+
+export function migrateSafeRetypedFields(
+  existing: Schema,
+  changes: FieldChange[]
+): void {
+  const retypedFields = new Map<
+    string,
+    { before: FieldType; after: FieldType }
+  >()
+  for (const change of changes) {
+    if (change.changeType === 'retyped') {
+      retypedFields.set(change.fieldId, {
+        before: change.before,
+        after: change.after
+      })
+    }
+  }
+  if (retypedFields.size === 0) return
+
+  const entries = listEntries(existing.id)
+
+  for (const entry of entries) {
+    let changed = false
+    const data = { ...entry.data }
+
+    for (const [fieldId, { before, after }] of retypedFields) {
+      const converted = convertValueForMigration(before, after, data[fieldId])
+      if (converted !== undefined) {
+        data[fieldId] = converted
+        changed = true
+      }
+    }
+
+    if (changed) overwriteEntryData(entry.id, data)
+  }
 }
 
 export function previewSchemaDeletion(schemaId: string): SchemaDeletionImpact {

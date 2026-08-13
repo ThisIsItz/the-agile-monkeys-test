@@ -10,8 +10,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 export const EntityActions = ({
   onEdit,
   onDelete,
-  mt,
-  variant = 'light'
+  mt
 }: {
   onEdit: () => void
   onDelete: () => void
@@ -23,7 +22,7 @@ export const EntityActions = ({
     <Group justify="flex-end" gap="xs" mt={mt}>
       <Button
         size="xs"
-        variant={variant}
+        variant="subtle"
         leftSection={<Pencil size={16} />}
         onClick={onEdit}
       >
@@ -31,7 +30,7 @@ export const EntityActions = ({
       </Button>
       <Button
         size="xs"
-        variant={variant}
+        variant="subtle"
         color="red"
         leftSection={<Trash2 size={16} />}
         onClick={onDelete}

@@ -17,6 +17,7 @@ import {
   Text
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
+import { getEntryLabel } from '@shared/entryLabel'
 import type { Entry, Schema } from '@shared/types'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -27,7 +28,6 @@ import {
   newEntryPath
 } from '@/features/routes/paths'
 import { getReferenceLabels } from './referenceLabels'
-import { getEntryLabel } from './entryUtils'
 
 export const EntriesPage = () => {
   const navigate = useNavigate()

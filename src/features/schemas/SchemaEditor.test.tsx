@@ -97,4 +97,67 @@ describe('SchemaEditor', () => {
     expect(await screen.findByText('Person')).toBeTruthy()
     expect(screen.queryByText('Car')).toBeNull()
   })
+
+  it('shows the change preview before applying, and only updates after confirming', async () => {
+    const editedSchema: Schema = {
+      id: 'book-1',
+      name: 'Book',
+      fields: [
+        {
+          id: 'f1',
+          schemaId: 'book-1',
+          name: 'subtitle',
+          type: 'text',
+          required: false,
+          referenceTargetSchemaId: null,
+          position: 0,
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdAt: '',
+      updatedAt: ''
+    }
+    vi.mocked(schemasApi.getSchemas).mockResolvedValue([editedSchema])
+    vi.mocked(schemasApi.previewSchemaChange).mockResolvedValue({
+      changes: [
+        {
+          fieldId: 'f1',
+          fieldName: 'subtitle',
+          changeType: 'made_required',
+          affectedEntries: [{ id: 'entry-1', label: 'entry-1' }]
+        }
+      ]
+    })
+    vi.mocked(schemasApi.updateSchema).mockResolvedValue(editedSchema)
+    const handleBack = vi.fn()
+    const user = userEvent.setup()
+
+    renderWithProviders(
+      <SchemaEditor schema={editedSchema} handleBack={handleBack} />
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByText('Review schema changes')).toBeTruthy()
+    expect(schemasApi.updateSchema).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Apply changes' }))
+
+    await waitFor(() =>
+      expect(schemasApi.updateSchema).toHaveBeenCalledWith('book-1', {
+        name: 'Book',
+        fields: [
+          {
+            id: 'f1',
+            name: 'subtitle',
+            type: 'text',
+            required: false,
+            referenceTargetSchemaId: null
+          }
+        ]
+      })
+    )
+    await waitFor(() => expect(handleBack).toHaveBeenCalled())
+  })
 })

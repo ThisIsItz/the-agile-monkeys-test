@@ -35,3 +35,78 @@ export type Entry = z.infer<typeof entrySchema>
 export interface EntryInput {
   data: Record<string, EntryFieldValue>
 }
+
+export type FieldChange =
+  | RenamedFieldChange
+  | DeletedFieldChange
+  | RetypedFieldChange
+  | MadeRequiredFieldChange
+  | ReferenceTargetChangedFieldChange
+  | AddedRequiredFieldChange
+
+interface RenamedFieldChange {
+  fieldId: string
+  fieldName: string
+  changeType: 'renamed'
+  before: string
+  after: string
+}
+
+interface DeletedFieldChange {
+  fieldId: string
+  fieldName: string
+  changeType: 'deleted'
+}
+
+interface RetypedFieldChange {
+  fieldId: string
+  fieldName: string
+  changeType: 'retyped'
+  before: Field['type']
+  after: Field['type']
+}
+
+interface MadeRequiredFieldChange {
+  fieldId: string
+  fieldName: string
+  changeType: 'made_required'
+}
+
+interface ReferenceTargetChangedFieldChange {
+  fieldId: string
+  fieldName: string
+  changeType: 'reference_target_changed'
+  before: string | null
+  after: string | null
+}
+
+interface AddedRequiredFieldChange {
+  fieldName: string
+  changeType: 'added_required'
+}
+
+export interface AffectedEntry {
+  id: string
+  label: string
+}
+
+export type FieldChangeImpact = FieldChange & {
+  affectedEntries: AffectedEntry[]
+}
+
+export type SchemaPreviewResponse = {
+  changes: FieldChangeImpact[]
+}
+
+export interface BlockingReference {
+  schemaId: string
+  schemaName: string
+  fieldId: string
+  fieldName: string
+}
+
+export interface SchemaDeletionImpact {
+  schemaId: string
+  affectedEntryIds: string[]
+  blockingReferences: BlockingReference[]
+}

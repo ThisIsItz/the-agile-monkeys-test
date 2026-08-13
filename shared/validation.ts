@@ -39,3 +39,60 @@ export const entrySchema = z.object({
 })
 
 export const entriesResponseSchema = z.array(entrySchema)
+
+const affectedEntrySchema = z.object({
+  id: z.string(),
+  label: z.string()
+})
+
+const fieldChangeBaseSchema = z.object({
+  fieldId: z.string(),
+  fieldName: z.string(),
+  affectedEntries: z.array(affectedEntrySchema)
+})
+
+export const fieldChangeImpactSchema = z.discriminatedUnion('changeType', [
+  fieldChangeBaseSchema.extend({
+    changeType: z.literal('renamed'),
+    before: z.string(),
+    after: z.string()
+  }),
+  fieldChangeBaseSchema.extend({
+    changeType: z.literal('deleted')
+  }),
+  fieldChangeBaseSchema.extend({
+    changeType: z.literal('retyped'),
+    before: z.enum(FIELD_TYPES),
+    after: z.enum(FIELD_TYPES)
+  }),
+  fieldChangeBaseSchema.extend({
+    changeType: z.literal('made_required')
+  }),
+  fieldChangeBaseSchema.extend({
+    changeType: z.literal('reference_target_changed'),
+    before: z.string().nullable(),
+    after: z.string().nullable()
+  }),
+  z.object({
+    fieldName: z.string(),
+    affectedEntries: z.array(affectedEntrySchema),
+    changeType: z.literal('added_required')
+  })
+])
+
+export const schemaPreviewResponseSchema = z.object({
+  changes: z.array(fieldChangeImpactSchema)
+})
+
+export const schemaDeletionImpactSchema = z.object({
+  schemaId: z.string(),
+  affectedEntryIds: z.array(z.string()),
+  blockingReferences: z.array(
+    z.object({
+      schemaId: z.string(),
+      schemaName: z.string(),
+      fieldId: z.string(),
+      fieldName: z.string()
+    })
+  )
+})

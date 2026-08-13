@@ -4,6 +4,8 @@ import {
 } from '@server/entries/entries.repository.js'
 import { listSchemas } from '@server/schemas/schemas.repository.js'
 import type {
+  AffectedEntry,
+  Entry,
   EntryFieldValue,
   FieldInput,
   Schema,
@@ -14,6 +16,7 @@ import type {
   FieldChangeImpact,
   SchemaDeletionImpact
 } from '@shared/types.js'
+import { getEntryLabel } from '@shared/entryLabel.js'
 import { fieldValueSchema } from './validation.js'
 
 export function diffSchemaFields(
@@ -113,11 +116,17 @@ function isValueValidForField(
 }
 
 export function findAffectedEntries(
-  schemaId: string,
+  existing: Schema,
   changes: FieldChange[],
   input: SchemaInput
 ): FieldChangeImpact[] {
-  const entries = listEntries(schemaId)
+  const entries = listEntries(existing.id)
+
+  const toAffectedEntries = (matches: Entry[]): AffectedEntry[] =>
+    matches.map((entry) => ({
+      id: entry.id,
+      label: getEntryLabel(entry, existing)
+    }))
 
   const incomingById = new Map<string, FieldInput>()
   for (const field of input.fields) {
@@ -127,14 +136,14 @@ export function findAffectedEntries(
   return changes.map((change) => {
     switch (change.changeType) {
       case 'renamed':
-        return { ...change, affectedEntryIds: [] }
+        return { ...change, affectedEntries: [] }
 
       case 'deleted':
         return {
           ...change,
-          affectedEntryIds: entries
-            .filter((entry) => hasValue(entry.data[change.fieldId]))
-            .map((entry) => entry.id)
+          affectedEntries: toAffectedEntries(
+            entries.filter((entry) => hasValue(entry.data[change.fieldId]))
+          )
         }
 
       case 'retyped': {
@@ -146,12 +155,12 @@ export function findAffectedEntries(
         }
         return {
           ...change,
-          affectedEntryIds: entries
-            .filter(
+          affectedEntries: toAffectedEntries(
+            entries.filter(
               (entry) =>
                 !isValueValidForField(newField, entry.data[change.fieldId])
             )
-            .map((entry) => entry.id)
+          )
         }
       }
 
@@ -164,32 +173,32 @@ export function findAffectedEntries(
         }
         return {
           ...change,
-          affectedEntryIds: entries
-            .filter(
+          affectedEntries: toAffectedEntries(
+            entries.filter(
               (entry) =>
                 !isValueValidForField(newField, entry.data[change.fieldId])
             )
-            .map((entry) => entry.id)
+          )
         }
       }
 
       case 'reference_target_changed':
         return {
           ...change,
-          affectedEntryIds: entries
-            .filter((entry) => {
+          affectedEntries: toAffectedEntries(
+            entries.filter((entry) => {
               const value = entry.data[change.fieldId]
               if (!hasValue(value) || typeof value !== 'string') return false
               if (!change.after) return false
               return getEntryById(change.after, value) === undefined
             })
-            .map((entry) => entry.id)
+          )
         }
 
       case 'added_required':
         return {
           ...change,
-          affectedEntryIds: entries.map((entry) => entry.id)
+          affectedEntries: toAffectedEntries(entries)
         }
     }
   })

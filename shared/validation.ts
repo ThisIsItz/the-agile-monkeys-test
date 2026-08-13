@@ -40,10 +40,15 @@ export const entrySchema = z.object({
 
 export const entriesResponseSchema = z.array(entrySchema)
 
+const affectedEntrySchema = z.object({
+  id: z.string(),
+  label: z.string()
+})
+
 const fieldChangeBaseSchema = z.object({
   fieldId: z.string(),
   fieldName: z.string(),
-  affectedEntryIds: z.array(z.string())
+  affectedEntries: z.array(affectedEntrySchema)
 })
 
 export const fieldChangeImpactSchema = z.discriminatedUnion('changeType', [
@@ -70,7 +75,7 @@ export const fieldChangeImpactSchema = z.discriminatedUnion('changeType', [
   }),
   z.object({
     fieldName: z.string(),
-    affectedEntryIds: z.array(z.string()),
+    affectedEntries: z.array(affectedEntrySchema),
     changeType: z.literal('added_required')
   })
 ])

@@ -1,4 +1,4 @@
-import type { Entry, Schema } from '@shared/types'
+import type { Entry, Schema } from './types.js'
 
 export const getEntryLabel = (entry: Entry, schema: Schema): string => {
   const textField = schema.fields.find((field) => {

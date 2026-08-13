@@ -244,9 +244,9 @@ describe('findAffectedEntries', () => {
       fields: [toInput(titleField, { name: 'headline' })]
     }
     const changes = diffSchemaFields(schema, input)
-    const impacts = findAffectedEntries(schema.id, changes, input)
+    const impacts = findAffectedEntries(schema, changes, input)
 
-    expect(impactFor(impacts, 'renamed').affectedEntryIds).toEqual([])
+    expect(impactFor(impacts, 'renamed').affectedEntries).toEqual([])
   })
 
   it('affects entries with a value for a deleted field, not entries without one', () => {
@@ -262,10 +262,10 @@ describe('findAffectedEntries', () => {
 
     const input = { name: 'Book', fields: [] }
     const changes = diffSchemaFields(schema, input)
-    const impacts = findAffectedEntries(schema.id, changes, input)
+    const impacts = findAffectedEntries(schema, changes, input)
 
-    expect(impactFor(impacts, 'deleted').affectedEntryIds).toEqual([
-      withValue.id
+    expect(impactFor(impacts, 'deleted').affectedEntries).toEqual([
+      { id: withValue.id, label: 'Dune' }
     ])
   })
 
@@ -284,9 +284,11 @@ describe('findAffectedEntries', () => {
       fields: [toInput(pagesField, { type: 'number' })]
     }
     const changes = diffSchemaFields(schema, input)
-    const impacts = findAffectedEntries(schema.id, changes, input)
+    const impacts = findAffectedEntries(schema, changes, input)
 
-    expect(impactFor(impacts, 'retyped').affectedEntryIds).toEqual([entry.id])
+    expect(impactFor(impacts, 'retyped').affectedEntries).toEqual([
+      { id: entry.id, label: 'not-a-number' }
+    ])
   })
 
   it('when retyped to reference, only affects entries whose value does not point at a real entry in the new target', () => {
@@ -315,14 +317,14 @@ describe('findAffectedEntries', () => {
       ]
     }
     const changes = diffSchemaFields(schema, input)
-    const impacts = findAffectedEntries(schema.id, changes, input)
+    const impacts = findAffectedEntries(schema, changes, input)
 
-    expect(impactFor(impacts, 'retyped').affectedEntryIds).toEqual([
-      danglingReference.id
+    expect(impactFor(impacts, 'retyped').affectedEntries).toEqual([
+      { id: danglingReference.id, label: 'not-a-real-entry-id' }
     ])
-    expect(impactFor(impacts, 'retyped').affectedEntryIds).not.toContain(
-      validReference.id
-    )
+    expect(
+      impactFor(impacts, 'retyped').affectedEntries.map((entry) => entry.id)
+    ).not.toContain(validReference.id)
   })
 
   it('affects entries missing a value for a field made required, not entries with one', () => {
@@ -339,10 +341,10 @@ describe('findAffectedEntries', () => {
       fields: [toInput(subtitleField, { required: true })]
     }
     const changes = diffSchemaFields(schema, input)
-    const impacts = findAffectedEntries(schema.id, changes, input)
+    const impacts = findAffectedEntries(schema, changes, input)
 
-    expect(impactFor(impacts, 'made_required').affectedEntryIds).toEqual([
-      withoutValue.id
+    expect(impactFor(impacts, 'made_required').affectedEntries).toEqual([
+      { id: withoutValue.id, label: `${withoutValue.id.slice(0, 8)}…` }
     ])
   })
 
@@ -361,10 +363,10 @@ describe('findAffectedEntries', () => {
       fields: [toInput(subtitleField, { required: true })]
     }
     const changes = diffSchemaFields(schema, input)
-    const impacts = findAffectedEntries(schema.id, changes, input)
+    const impacts = findAffectedEntries(schema, changes, input)
 
-    expect(impactFor(impacts, 'made_required').affectedEntryIds).toEqual([
-      emptyString.id
+    expect(impactFor(impacts, 'made_required').affectedEntries).toEqual([
+      { id: emptyString.id, label: `${emptyString.id.slice(0, 8)}…` }
     ])
   })
 
@@ -396,11 +398,11 @@ describe('findAffectedEntries', () => {
       ]
     }
     const changes = diffSchemaFields(schema, input)
-    const impacts = findAffectedEntries(schema.id, changes, input)
+    const impacts = findAffectedEntries(schema, changes, input)
 
     expect(
-      impactFor(impacts, 'reference_target_changed').affectedEntryIds
-    ).toEqual([entry.id])
+      impactFor(impacts, 'reference_target_changed').affectedEntries
+    ).toEqual([{ id: entry.id, label: `${entry.id.slice(0, 8)}…` }])
   })
 
   it('computes affected entries independently per field when changes are combined', () => {
@@ -422,13 +424,13 @@ describe('findAffectedEntries', () => {
       fields: [toInput(fieldB, { required: true })]
     }
     const changes = diffSchemaFields(schema, input)
-    const impacts = findAffectedEntries(schema.id, changes, input)
+    const impacts = findAffectedEntries(schema, changes, input)
 
-    expect(impactFor(impacts, 'deleted').affectedEntryIds).toEqual([
-      entryWithA.id
+    expect(impactFor(impacts, 'deleted').affectedEntries).toEqual([
+      { id: entryWithA.id, label: 'value-a' }
     ])
-    expect(impactFor(impacts, 'made_required').affectedEntryIds).toEqual([
-      entryWithB.id
+    expect(impactFor(impacts, 'made_required').affectedEntries).toEqual([
+      { id: entryWithB.id, label: `${entryWithB.id.slice(0, 8)}…` }
     ])
   })
 })

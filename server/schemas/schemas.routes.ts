@@ -34,7 +34,7 @@ schemasRouter.post('/:id/preview', (req, res) => {
   if (!existing) throw new HttpError(404, 'Schema not found')
 
   const changes = diffSchemaFields(existing, input)
-  const impacts = findAffectedEntries(existing.id, changes, input)
+  const impacts = findAffectedEntries(existing, changes, input)
 
   res.json({ changes: impacts })
 })

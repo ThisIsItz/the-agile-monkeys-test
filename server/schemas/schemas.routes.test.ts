@@ -58,7 +58,7 @@ describe('schemas.routes', () => {
             fieldId: string
             fieldName: string
             changeType: string
-            affectedEntryIds: string[]
+            affectedEntries: Array<{ id: string; label: string }>
           }>
         }
 
@@ -68,7 +68,7 @@ describe('schemas.routes', () => {
             fieldId: titleField.id,
             fieldName: 'title',
             changeType: 'deleted',
-            affectedEntryIds: [entry.id]
+            affectedEntries: [{ id: entry.id, label: 'Dune' }]
           }
         ])
 

@@ -8,16 +8,9 @@ import {
   Text,
   UnstyledButton
 } from '@mantine/core'
-import type {
-  Entry,
-  FieldChangeImpact,
-  Schema,
-  SchemaPreviewResponse
-} from '@shared/types'
+import type { FieldChangeImpact, SchemaPreviewResponse } from '@shared/types'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { getEntries } from '@/api/entries'
-import { getEntryLabel } from '@/features/entries/entryUtils'
+import { useState } from 'react'
 
 const getChangeLabel = (change: FieldChangeImpact): string => {
   switch (change.changeType) {
@@ -40,31 +33,14 @@ export const SchemaChangePreviewModal = ({
   opened,
   onClose,
   onConfirm,
-  preview,
-  schema
+  preview
 }: {
   opened: boolean
   onClose: () => void
   onConfirm: () => void
   preview: SchemaPreviewResponse | null
-  schema: Schema | null
 }) => {
-  const [entries, setEntries] = useState<Entry[]>([])
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
-
-  useEffect(() => {
-    if (!opened || !schema) return
-
-    getEntries(schema.id)
-      .then(setEntries)
-      .catch(() => setEntries([]))
-  }, [opened, schema])
-
-  const labelFor = (entryId: string): string => {
-    const entry = entries.find((e) => e.id === entryId)
-    if (!entry || !schema) return entryId
-    return getEntryLabel(entry, schema)
-  }
 
   const toggleExpanded = (key: string) => {
     setExpanded((current) => {
@@ -106,17 +82,17 @@ export const SchemaChangePreviewModal = ({
                 <Text size="sm">{getChangeLabel(change)}</Text>
                 <Text
                   size="sm"
-                  c={change.affectedEntryIds.length > 0 ? 'orange' : 'dimmed'}
+                  c={change.affectedEntries.length > 0 ? 'orange' : 'dimmed'}
                 >
-                  {change.affectedEntryIds.length === 0
+                  {change.affectedEntries.length === 0
                     ? 'No entries affected'
-                    : `${change.affectedEntryIds.length} ${
-                        change.affectedEntryIds.length === 1
+                    : `${change.affectedEntries.length} ${
+                        change.affectedEntries.length === 1
                           ? 'entry'
                           : 'entries'
                       } affected`}
                 </Text>
-                {change.affectedEntryIds.length > 0 && (
+                {change.affectedEntries.length > 0 && (
                   <>
                     <UnstyledButton
                       onClick={() => toggleExpanded(key)}
@@ -133,9 +109,9 @@ export const SchemaChangePreviewModal = ({
                     </UnstyledButton>
                     <Collapse expanded={isExpanded}>
                       <Stack gap={2} pl="lg">
-                        {change.affectedEntryIds.map((entryId) => (
-                          <Text key={entryId} size="xs" c="dimmed">
-                            {labelFor(entryId)}
+                        {change.affectedEntries.map((entry) => (
+                          <Text key={entry.id} size="xs" c="dimmed">
+                            {entry.label}
                           </Text>
                         ))}
                       </Stack>

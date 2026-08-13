@@ -85,7 +85,14 @@ interface AddedRequiredFieldChange {
   changeType: 'added_required'
 }
 
-export type FieldChangeImpact = FieldChange & { affectedEntryIds: string[] }
+export interface AffectedEntry {
+  id: string
+  label: string
+}
+
+export type FieldChangeImpact = FieldChange & {
+  affectedEntries: AffectedEntry[]
+}
 
 export type SchemaPreviewResponse = {
   changes: FieldChangeImpact[]

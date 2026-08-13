@@ -5,10 +5,8 @@ import type { Schema } from '@shared/types'
 import { renderWithProviders } from '@/test/render'
 import { SchemaEditor } from './SchemaEditor'
 import * as schemasApi from '@/api/schemas'
-import * as entriesApi from '@/api/entries'
 
 vi.mock('@/api/schemas')
-vi.mock('@/api/entries')
 
 describe('SchemaEditor', () => {
   beforeEach(() => {
@@ -127,11 +125,10 @@ describe('SchemaEditor', () => {
           fieldId: 'f1',
           fieldName: 'subtitle',
           changeType: 'made_required',
-          affectedEntryIds: ['entry-1']
+          affectedEntries: [{ id: 'entry-1', label: 'entry-1' }]
         }
       ]
     })
-    vi.mocked(entriesApi.getEntries).mockResolvedValue([])
     vi.mocked(schemasApi.updateSchema).mockResolvedValue(editedSchema)
     const handleBack = vi.fn()
     const user = userEvent.setup()

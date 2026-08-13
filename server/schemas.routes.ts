@@ -2,6 +2,7 @@ import { Router } from 'express'
 import * as repo from './schemas.repository.js'
 import { schemaInputSchema } from './validation.js'
 import { HttpError } from './http-error.js'
+import { emitSchemasChanged } from './realtime.js'
 
 export const schemasRouter = Router()
 
@@ -17,15 +18,20 @@ schemasRouter.get('/:id', (req, res) => {
 
 schemasRouter.post('/', (req, res) => {
   const input = schemaInputSchema.parse(req.body)
-  res.status(201).json(repo.createSchema(input))
+  const schema = repo.createSchema(input)
+  emitSchemasChanged(schema.id)
+  res.status(201).json(schema)
 })
 
 schemasRouter.put('/:id', (req, res) => {
   const input = schemaInputSchema.parse(req.body)
-  res.json(repo.updateSchema(req.params.id, input))
+  const schema = repo.updateSchema(req.params.id, input)
+  emitSchemasChanged(schema.id)
+  res.json(schema)
 })
 
 schemasRouter.delete('/:id', (req, res) => {
   repo.deleteSchema(req.params.id)
+  emitSchemasChanged(req.params.id)
   res.status(204).send()
 })

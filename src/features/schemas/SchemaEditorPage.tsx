@@ -1,18 +1,39 @@
 import { getSchema } from '@/api/schemas'
+import { ReloadWarning } from '@/components/ReloadWarning'
+import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import { Loader } from '@mantine/core'
 import { type Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { SchemaEditor } from './SchemaEditor'
+import { ApiError } from '@/api/client'
+import { NotFoundPage } from '@/components/NotFoundPage'
 
 export const SchemaEditorPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [schema, setSchema] = useState<Schema | undefined>(undefined)
+  const [schemaChanged, setSchemaChanged] = useState(false)
   const [loading, setLoading] = useState(Boolean(id))
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<Error | null>(null)
 
   const handleBack = () => navigate('/schemas')
+
+  useRealtimeEvent<{ schemaId: string }>('schemas:changed', (payload) => {
+    if (id && payload.schemaId === id) setSchemaChanged(true)
+  })
+
+  const handleReload = async () => {
+    if (!id) return
+
+    try {
+      const data = await getSchema(id)
+      setSchema(data)
+      setSchemaChanged(false)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'))
+    }
+  }
 
   useEffect(() => {
     if (!id) return
@@ -22,7 +43,7 @@ export const SchemaEditorPage = () => {
         const data = await getSchema(id)
         setSchema(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
+        setError(err instanceof Error ? err : new Error('Unknown error'))
       } finally {
         setLoading(false)
       }
@@ -32,7 +53,25 @@ export const SchemaEditorPage = () => {
   }, [id])
 
   if (loading) return <Loader />
-  if (error) return <div>Error: {error}</div>
+  if (error instanceof ApiError && error.status === 404) {
+    return <NotFoundPage />
+  }
+  if (error) return <div>Error: {error.message}</div>
 
-  return <SchemaEditor schema={schema} handleBack={handleBack} />
+  return (
+    <div>
+      {schemaChanged && (
+        <ReloadWarning
+          title="This schema was changed"
+          message="This schema was changed or deleted elsewhere while you were editing. Reload to see the latest version. Any unsaved changes will be lost."
+          onReload={handleReload}
+        />
+      )}
+      <SchemaEditor
+        key={schema?.updatedAt ?? 'new'}
+        schema={schema}
+        handleBack={handleBack}
+      />
+    </div>
+  )
 }

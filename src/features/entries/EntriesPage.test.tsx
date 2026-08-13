@@ -8,11 +8,15 @@ import { EntriesPage } from './EntriesPage'
 import * as entriesApi from '@/api/entries'
 import * as schemasApi from '@/api/schemas'
 import { modals } from '@mantine/modals'
+import { socket } from '@/realtime/socket'
 
 vi.mock('@/api/entries')
 vi.mock('@/api/schemas')
 vi.mock('@mantine/modals', () => ({
   modals: { openConfirmModal: vi.fn() }
+}))
+vi.mock('@/realtime/socket', () => ({
+  socket: { on: vi.fn(), off: vi.fn() }
 }))
 
 const personSchema: Schema = {
@@ -130,6 +134,34 @@ describe('EntriesPage', () => {
     )
     await waitFor(() =>
       expect(screen.getByText('No entries yet.')).toBeTruthy()
+    )
+  })
+
+  it('refetches entries only when the event schemaId matches the current schema', async () => {
+    vi.mocked(schemasApi.getSchema).mockImplementation(async (id) =>
+      id === 'car-1' ? carSchema : personSchema
+    )
+    vi.mocked(entriesApi.getEntries).mockImplementation(async (schemaId) =>
+      schemaId === 'car-1' ? [carEntry] : [personEntry]
+    )
+
+    renderEntriesPage()
+    await screen.findByRole('link', { name: 'Alice' })
+
+    const listener = vi
+      .mocked(socket.on)
+      .mock.calls.find(([event]) => event === 'entries:changed')?.[1] as
+      | ((payload: { schemaId: string; entryId: string }) => void)
+      | undefined
+
+    vi.mocked(entriesApi.getEntries).mockClear()
+    listener?.({ schemaId: 'other-schema', entryId: 'x' })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(entriesApi.getEntries).not.toHaveBeenCalled()
+
+    listener?.({ schemaId: 'car-1', entryId: 'car-entry-1' })
+    await waitFor(() =>
+      expect(entriesApi.getEntries).toHaveBeenCalledWith('car-1')
     )
   })
 })

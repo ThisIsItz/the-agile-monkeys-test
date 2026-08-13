@@ -24,7 +24,7 @@ export const EntryEditor = ({
   schema: Schema
   handleBack: () => void
 }) => {
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<Error | null>(null)
   const [referenceOptions, setReferenceOptions] = useState<
     Record<string, { value: string; label: string }[]>
   >({})
@@ -92,7 +92,7 @@ export const EntryEditor = ({
 
         setReferenceOptions(optionsByFieldId)
       } catch (err) {
-        console.error('Failed to load reference options', err)
+        setError(err instanceof Error ? err : new Error('Unknown error'))
       }
     }
 
@@ -111,7 +111,7 @@ export const EntryEditor = ({
 
       handleBack()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err : new Error('Unknown error'))
     }
   }
 
@@ -186,7 +186,7 @@ export const EntryEditor = ({
       <Title>{entry ? 'Edit Entry' : 'Create Entry'}</Title>
       {error && (
         <Alert color="red" mt="md" icon={<TriangleAlert size={16} />}>
-          {error}
+          {error.message}
         </Alert>
       )}
       <form onSubmit={entryForm.onSubmit(handleFormSubmit)}>

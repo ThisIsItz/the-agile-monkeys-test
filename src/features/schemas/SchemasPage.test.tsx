@@ -6,10 +6,14 @@ import { renderWithProviders } from '@/test/render'
 import { SchemaList } from './SchemasPage'
 import * as schemasApi from '@/api/schemas'
 import { modals } from '@mantine/modals'
+import { socket } from '@/realtime/socket'
 
 vi.mock('@/api/schemas')
 vi.mock('@mantine/modals', () => ({
   modals: { openConfirmModal: vi.fn() }
+}))
+vi.mock('@/realtime/socket', () => ({
+  socket: { on: vi.fn(), off: vi.fn() }
 }))
 
 const personSchema: Schema = {
@@ -88,5 +92,23 @@ describe('SchemaList', () => {
       expect(schemasApi.deleteSchema).toHaveBeenCalledWith('person-1')
     )
     await waitFor(() => expect(screen.queryByText('Person')).toBeNull())
+  })
+
+  it('refetches the list when a schemas:changed event is received', async () => {
+    vi.mocked(schemasApi.getSchemas).mockResolvedValue([personSchema])
+    renderWithProviders(<SchemaList />)
+
+    await screen.findByText('Person')
+    expect(screen.queryByText('Car')).toBeNull()
+
+    vi.mocked(schemasApi.getSchemas).mockResolvedValue([personSchema, carSchema])
+    const listener = vi
+      .mocked(socket.on)
+      .mock.calls.find(([event]) => event === 'schemas:changed')?.[1] as
+      | (() => void)
+      | undefined
+    listener?.()
+
+    expect(await screen.findByText('Car')).toBeTruthy()
   })
 })

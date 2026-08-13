@@ -1,12 +1,12 @@
 import type { Entry, EntryInput } from '@shared/types.js'
 import { entriesResponseSchema, entrySchema } from '@shared/validation.js'
-import { getErrorMessage } from './client'
+import { throwApiError } from './client'
 
 export async function getEntries(schemaId: string): Promise<Entry[]> {
   const response = await fetch(`/api/schemas/${schemaId}/entries`)
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 
   const data = await response.json()
@@ -17,7 +17,7 @@ export async function getEntry(schemaId: string, id: string): Promise<Entry> {
   const response = await fetch(`/api/schemas/${schemaId}/entries/${id}`)
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 
   const data = await response.json()
@@ -37,7 +37,7 @@ export async function createEntry(
   })
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 
   const data = await response.json()
@@ -50,7 +50,7 @@ export async function deleteEntry(schemaId: string, id: string): Promise<void> {
   })
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 }
 
@@ -68,7 +68,7 @@ export async function updateEntry(
   })
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 
   const data = await response.json()

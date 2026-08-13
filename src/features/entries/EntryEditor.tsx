@@ -23,12 +23,14 @@ export const EntryEditor = ({
   entry,
   schema,
   handleSaved,
-  reviewFields
+  reviewFields,
+  onSaving
 }: {
   entry?: Entry
   schema: Schema
   handleSaved: () => void
   reviewFields: NeedsReviewItem[]
+  onSaving?: (saving: boolean) => void
 }) => {
   const [error, setError] = useState<Error | null>(null)
   const [referenceOptions, setReferenceOptions] = useState<
@@ -40,6 +42,7 @@ export const EntryEditor = ({
 
   const handleFormSubmit = async (values: EntryInput) => {
     setError(null)
+    onSaving?.(true)
     const normalizedValues: EntryInput = {
       data: normalizeEntryData(schema, values.data)
     }
@@ -53,6 +56,7 @@ export const EntryEditor = ({
 
       handleSaved()
     } catch (err) {
+      onSaving?.(false)
       setError(err instanceof Error ? err : new Error('Unknown error'))
     }
   }

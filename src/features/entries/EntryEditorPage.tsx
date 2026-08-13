@@ -3,7 +3,7 @@ import { ReloadWarning } from '@/components/ReloadWarning'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import { Button, Center, Loader, Title } from '@mantine/core'
 import { type Entry, type Schema } from '@shared/types'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EntryEditor } from './EntryEditor'
 import { getSchema } from '@/api/schemas'
@@ -26,6 +26,7 @@ export const EntryEditorPage = () => {
   const [entryChanged, setEntryChanged] = useState(false)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
+  const savingRef = useRef(false)
 
   const needsReview = getNeedsReview(location.state)
 
@@ -52,7 +53,7 @@ export const EntryEditorPage = () => {
   useRealtimeEvent<{ schemaId: string; entryId: string }>(
     'entries:changed',
     (payload) => {
-      if (!entryId) return
+      if (!entryId || savingRef.current) return
       if (payload.schemaId === schemaId && payload.entryId === entryId) {
         setEntryChanged(true)
       }
@@ -141,6 +142,9 @@ export const EntryEditorPage = () => {
           schema={schema}
           handleSaved={handleSaved}
           reviewFields={reviewFields}
+          onSaving={(saving) => {
+            savingRef.current = saving
+          }}
         />
       )}
     </div>

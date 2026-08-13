@@ -1,3 +1,5 @@
+import type { ZodType } from 'zod'
+
 export async function getErrorMessage(response: Response): Promise<string> {
   try {
     const data: unknown = await response.json()
@@ -28,4 +30,20 @@ export class ApiError extends Error {
 
 export async function throwApiError(response: Response): Promise<never> {
   throw new ApiError(await getErrorMessage(response), response.status)
+}
+
+export const apiFetch = async <T>(
+  validation: ZodType<T> | null,
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<T> => {
+  const response = await fetch(input, init)
+  if (!response.ok) {
+    await throwApiError(response)
+  }
+
+  if (!validation) return undefined as T
+
+  const data = await response.json()
+  return validation.parse(data)
 }

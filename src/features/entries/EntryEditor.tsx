@@ -1,11 +1,11 @@
-import { createEntry, getEntries, updateEntry } from '@/api/entries'
-import { getSchema } from '@/api/schemas'
+import { createEntry, updateEntry } from '@/api/entries'
 import { Alert, Button, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import type { Entry, EntryInput, Field, Schema } from '@shared/types'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EntryFieldInput } from './EntryFieldInput'
+import { getReferenceOptions } from './referenceOptions'
 
 const getEntryInitialValues = (schema: Schema, entry?: Entry): EntryInput => ({
   data: Object.fromEntries(
@@ -33,66 +33,6 @@ export const EntryEditor = ({
     initialValues: getEntryInitialValues(schema, entry)
   })
 
-  useEffect(() => {
-    const referenceFields = schema.fields.filter(
-      (field) => field.type === 'reference' && field.referenceTargetSchemaId
-    )
-    if (referenceFields.length === 0) return
-
-    const targetSchemaIds = [
-      ...new Set(
-        referenceFields.map((field) => field.referenceTargetSchemaId as string)
-      )
-    ]
-
-    const loadReferenceOptions = async () => {
-      try {
-        const optionsBySchemaId: Record<
-          string,
-          { value: string; label: string }[]
-        > = {}
-
-        await Promise.all(
-          targetSchemaIds.map(async (targetSchemaId) => {
-            const [targetSchema, targetEntries] = await Promise.all([
-              getSchema(targetSchemaId),
-              getEntries(targetSchemaId)
-            ])
-            const titleField = targetSchema.fields[0]
-
-            optionsBySchemaId[targetSchemaId] = targetEntries.map(
-              (targetEntry) => {
-                const value = titleField
-                  ? targetEntry.data[titleField.id]
-                  : undefined
-                const label =
-                  value === null || value === undefined || value === ''
-                    ? targetEntry.id
-                    : String(value)
-                return { value: targetEntry.id, label }
-              }
-            )
-          })
-        )
-
-        const optionsByFieldId: Record<
-          string,
-          { value: string; label: string }[]
-        > = {}
-        for (const field of referenceFields) {
-          optionsByFieldId[field.id] =
-            optionsBySchemaId[field.referenceTargetSchemaId as string] ?? []
-        }
-
-        setReferenceOptions(optionsByFieldId)
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'))
-      }
-    }
-
-    loadReferenceOptions()
-  }, [schema])
-
   const handleFormSubmit = async (values: EntryInput) => {
     setError(null)
 
@@ -108,6 +48,18 @@ export const EntryEditor = ({
       setError(err instanceof Error ? err : new Error('Unknown error'))
     }
   }
+
+  useEffect(() => {
+    const loadReferenceOptions = async () => {
+      try {
+        setReferenceOptions(await getReferenceOptions(schema.fields))
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Unknown error'))
+      }
+    }
+
+    loadReferenceOptions()
+  }, [schema])
 
   return (
     <div>

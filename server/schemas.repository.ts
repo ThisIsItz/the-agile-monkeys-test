@@ -95,6 +95,14 @@ export function getSchemaById(id: string): Schema | undefined {
   return mapSchema(row, getFieldRows(id))
 }
 
+export function getSchemaByName(name: string): Schema | undefined {
+  const row = db.prepare('SELECT * FROM schemas WHERE name = ?').get(name) as
+    | SchemaRow
+    | undefined
+  if (!row) return undefined
+  return mapSchema(row, getFieldRows(row.id))
+}
+
 function assertReferenceTargetExists(field: FieldInput) {
   if (field.type !== 'reference') return
   if (!field.referenceTargetSchemaId) {

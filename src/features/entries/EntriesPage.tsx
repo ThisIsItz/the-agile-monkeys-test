@@ -1,8 +1,10 @@
+import { ApiError } from '@/api/client'
 import { deleteEntry, getEntries } from '@/api/entries'
 import { getSchema } from '@/api/schemas'
 import { confirmDelete } from '@/components/confirmDelete'
 import { EntityActions } from '@/components/EntityActions'
 import { ListPageHeader } from '@/components/ListPageHeader'
+import { NotFoundPage } from '@/components/NotFoundPage'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import {
   Anchor,
@@ -29,7 +31,8 @@ export const EntriesPage = () => {
     Record<string, string>
   >({})
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<Error | null>(null)
+
   useEffect(() => {
     const loadEntries = async () => {
       try {
@@ -42,7 +45,7 @@ export const EntriesPage = () => {
         setEntries(data)
         setSchema(fetchedSchema)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
+        setError(err instanceof Error ? err : new Error('Unknown error'))
       } finally {
         setLoading(false)
       }
@@ -57,7 +60,7 @@ export const EntriesPage = () => {
       const data = await getEntries(schemaId)
       setEntries(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err : new Error('Unknown error'))
     }
   }
 
@@ -106,7 +109,7 @@ export const EntriesPage = () => {
 
         setReferenceLabels(labels)
       } catch (err) {
-        console.error('Failed to load reference labels', err)
+        setError(err instanceof Error ? err : new Error('Unknown error'))
       }
     }
 
@@ -122,7 +125,7 @@ export const EntriesPage = () => {
       setEntries(data)
       notifications.show({ message: 'Entry deleted', color: 'green' })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err : new Error('Unknown error'))
     }
   }
 
@@ -148,7 +151,10 @@ export const EntriesPage = () => {
     })
 
   if (loading) return <Loader />
-  if (error) return <div>Error: {error}</div>
+  if (error instanceof ApiError && error.status === 404) {
+    return <NotFoundPage />
+  }
+  if (error) return <div>Error: {error.message}</div>
   if (!schema) return null
 
   return (

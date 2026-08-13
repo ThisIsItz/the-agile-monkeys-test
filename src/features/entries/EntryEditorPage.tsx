@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { EntryEditor } from './EntryEditor'
 import { getSchema } from '@/api/schemas'
+import { NotFoundPage } from '@/components/NotFoundPage'
+import { ApiError } from '@/api/client'
 
 export const EntryEditorPage = () => {
   const { entryId, schemaId } = useParams<{
@@ -19,7 +21,7 @@ export const EntryEditorPage = () => {
   const [schemaChanged, setSchemaChanged] = useState(false)
   const [entryChanged, setEntryChanged] = useState(false)
   const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<Error | null>(null)
 
   const handleBack = () => navigate(`/schemas/${schemaId}/entries`)
 
@@ -52,7 +54,7 @@ export const EntryEditorPage = () => {
       setSchemaChanged(false)
       setEntryChanged(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err : new Error('Unknown error'))
     }
   }
 
@@ -69,7 +71,7 @@ export const EntryEditorPage = () => {
           setEntry(entryData)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
+        setError(err instanceof Error ? err : new Error('Unknown error'))
       } finally {
         setLoading(false)
       }
@@ -79,7 +81,10 @@ export const EntryEditorPage = () => {
   }, [entryId, schemaId])
 
   if (loading) return <Loader />
-  if (error) return <div>Error: {error}</div>
+  if (error instanceof ApiError && error.status === 404) {
+    return <NotFoundPage />
+  }
+  if (error) return <div>Error: {error.message}</div>
   if (!schema) return null
 
   return (

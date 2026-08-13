@@ -9,10 +9,7 @@ import type {
   Schema,
   SchemaInput
 } from '@shared/types.js'
-import type {
-  FieldChange,
-  FieldChangeImpact
-} from './schema-evolution.types.js'
+import type { FieldChange, FieldChangeImpact } from '@shared/types.js'
 import { fieldValueSchema } from './validation.js'
 
 export function diffSchemaFields(

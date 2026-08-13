@@ -4,7 +4,7 @@ import { createApp } from '../app.js'
 import * as realtime from '../realtime/realtime.js'
 import type { Entry, Schema } from '@shared/types.js'
 
-vi.mock('./realtime.js', () => ({
+vi.mock('../realtime/realtime.js', () => ({
   emitSchemasChanged: vi.fn(),
   emitEntriesChanged: vi.fn()
 }))

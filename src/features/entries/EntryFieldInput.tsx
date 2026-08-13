@@ -56,6 +56,7 @@ export const EntryFieldInput = ({
           label={field.name}
           description={description}
           classNames={classNames}
+          styles={{ label: { fontWeight: 500 } }}
           {...form.getInputProps(path, { type: 'checkbox' })}
         />
       )

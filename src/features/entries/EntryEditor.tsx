@@ -1,8 +1,9 @@
 import { createEntry, updateEntry } from '@/api/entries'
-import { Alert, Button, Stack, Title } from '@mantine/core'
+import { FormCard } from '@/components/FormCard'
+import { Alert, Button, Group, Stack } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import type { Entry, EntryInput, Field, Schema } from '@shared/types'
-import { ArrowLeft, TriangleAlert } from 'lucide-react'
+import { TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EntryFieldInput } from './EntryFieldInput'
 import { isFieldFlagged, type NeedsReviewItem } from './needsReview'
@@ -21,15 +22,15 @@ const getEntryInitialValues = (schema: Schema, entry?: Entry): EntryInput => ({
 export const EntryEditor = ({
   entry,
   schema,
-  handleBack,
   handleSaved,
-  reviewFields
+  reviewFields,
+  onSaving
 }: {
   entry?: Entry
   schema: Schema
-  handleBack: () => void
   handleSaved: () => void
   reviewFields: NeedsReviewItem[]
+  onSaving?: (saving: boolean) => void
 }) => {
   const [error, setError] = useState<Error | null>(null)
   const [referenceOptions, setReferenceOptions] = useState<
@@ -41,6 +42,7 @@ export const EntryEditor = ({
 
   const handleFormSubmit = async (values: EntryInput) => {
     setError(null)
+    onSaving?.(true)
     const normalizedValues: EntryInput = {
       data: normalizeEntryData(schema, values.data)
     }
@@ -54,6 +56,7 @@ export const EntryEditor = ({
 
       handleSaved()
     } catch (err) {
+      onSaving?.(false)
       setError(err instanceof Error ? err : new Error('Unknown error'))
     }
   }
@@ -72,39 +75,34 @@ export const EntryEditor = ({
 
   return (
     <div>
-      <Button
-        variant="subtle"
-        onClick={handleBack}
-        leftSection={<ArrowLeft size={16} />}
-        color="gray"
-      >
-        Back
-      </Button>
-      <Title>{entry ? 'Edit Entry' : 'Create Entry'}</Title>
       {error && (
         <Alert color="red" mt="md" icon={<TriangleAlert size={16} />}>
           {error.message}
         </Alert>
       )}
       <form onSubmit={entryForm.onSubmit(handleFormSubmit)}>
-        <Stack mt="md">
-          {schema.fields.map((field) => {
-            const needsReview = isFieldFlagged(reviewFields, field)
+        <FormCard title={schema.name}>
+          <Stack gap="md">
+            {schema.fields.map((field) => {
+              const needsReview = isFieldFlagged(reviewFields, field)
 
-            return (
-              <EntryFieldInput
-                key={field.id}
-                field={field}
-                form={entryForm}
-                referenceOptions={referenceOptions[field.id] ?? []}
-                needsReview={needsReview}
-              />
-            )
-          })}
-          <Button type="submit" loading={entryForm.submitting}>
-            {entry ? 'Save changes' : 'Create entry'}
-          </Button>
-        </Stack>
+              return (
+                <EntryFieldInput
+                  key={field.id}
+                  field={field}
+                  form={entryForm}
+                  referenceOptions={referenceOptions[field.id] ?? []}
+                  needsReview={needsReview}
+                />
+              )
+            })}
+            <Group justify="flex-end">
+              <Button type="submit" loading={entryForm.submitting}>
+                {entry ? 'Save changes' : 'Create entry'}
+              </Button>
+            </Group>
+          </Stack>
+        </FormCard>
       </form>
     </div>
   )

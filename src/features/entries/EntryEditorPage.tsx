@@ -1,9 +1,9 @@
 import { getEntry } from '@/api/entries'
 import { ReloadWarning } from '@/components/ReloadWarning'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
-import { Loader } from '@mantine/core'
+import { Button, Center, Loader, Title } from '@mantine/core'
 import { type Entry, type Schema } from '@shared/types'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EntryEditor } from './EntryEditor'
 import { getSchema } from '@/api/schemas'
@@ -11,6 +11,7 @@ import { NotFoundPage } from '@/components/NotFoundPage'
 import { ApiError } from '@/api/client'
 import { entriesPath } from '@/features/routes/paths'
 import { getNeedsReview, withoutEntry } from './needsReview'
+import { ArrowLeft } from 'lucide-react'
 
 export const EntryEditorPage = () => {
   const { entryId, schemaId } = useParams<{
@@ -25,6 +26,7 @@ export const EntryEditorPage = () => {
   const [entryChanged, setEntryChanged] = useState(false)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
+  const savingRef = useRef(false)
 
   const needsReview = getNeedsReview(location.state)
 
@@ -51,7 +53,7 @@ export const EntryEditorPage = () => {
   useRealtimeEvent<{ schemaId: string; entryId: string }>(
     'entries:changed',
     (payload) => {
-      if (!entryId) return
+      if (!entryId || savingRef.current) return
       if (payload.schemaId === schemaId && payload.entryId === entryId) {
         setEntryChanged(true)
       }
@@ -99,15 +101,22 @@ export const EntryEditorPage = () => {
     loadData()
   }, [entryId, schemaId])
 
-  if (loading) return <Loader />
   if (error instanceof ApiError && error.status === 404) {
     return <NotFoundPage />
   }
   if (error) return <div>Error: {error.message}</div>
-  if (!schema) return null
 
   return (
     <div>
+      <Button
+        variant="subtle"
+        onClick={handleBack}
+        leftSection={<ArrowLeft size={16} />}
+        color="gray"
+      >
+        Back
+      </Button>
+      <Title>{entryId ? 'Edit Entry' : 'Create Entry'}</Title>
       {schemaChanged && (
         <ReloadWarning
           title="This schema was changed"
@@ -122,14 +131,22 @@ export const EntryEditorPage = () => {
           onReload={handleReload}
         />
       )}
-      <EntryEditor
-        key={`${schema.updatedAt}-${entry?.updatedAt ?? 'new'}`}
-        entry={entry}
-        schema={schema}
-        handleBack={handleBack}
-        handleSaved={handleSaved}
-        reviewFields={reviewFields}
-      />
+      {loading || !schema ? (
+        <Center mih={200}>
+          <Loader />
+        </Center>
+      ) : (
+        <EntryEditor
+          key={`${schema.updatedAt}-${entry?.updatedAt ?? 'new'}`}
+          entry={entry}
+          schema={schema}
+          handleSaved={handleSaved}
+          reviewFields={reviewFields}
+          onSaving={(saving) => {
+            savingRef.current = saving
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -5,6 +5,11 @@ import {
 } from '@/api/schemas.ts'
 import { EntityActions } from '@/components/EntityActions'
 import { ListPageHeader } from '@/components/ListPageHeader'
+import {
+  NEW_SCHEMA_ROUTE,
+  entriesPath,
+  schemaEditPath
+} from '@/features/routes/paths'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import {
   Button,
@@ -21,11 +26,6 @@ import type { Schema, SchemaDeletionImpact } from '@shared/types'
 import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  NEW_SCHEMA_ROUTE,
-  entriesPath,
-  schemaEditPath
-} from '@/features/routes/paths'
 import { SchemaDeletePreviewModal } from './SchemaDeletePreviewModal'
 
 export const SchemaList = () => {
@@ -94,17 +94,20 @@ export const SchemaList = () => {
     loadSchemas()
   }, [])
 
-  if (loading) return <Loader />
-
   return (
     <div>
       <ListPageHeader
         title="Schemas"
         actionLabel="Add schema"
         onAction={() => navigate(NEW_SCHEMA_ROUTE)}
+        mt="xl"
       />
       {error && <p className="schema-list__error">{error}</p>}
-      {schemas.length > 0 ? (
+      {loading ? (
+        <Center mih={200}>
+          <Loader />
+        </Center>
+      ) : schemas.length > 0 ? (
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="md">
           {schemas.map((schema) => (
             <Card
@@ -112,18 +115,15 @@ export const SchemaList = () => {
               withBorder
               padding="lg"
               radius="md"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%'
-              }}
+              className="schema-card"
             >
               <Group justify="space-between" align="center" mb="md">
                 <Text fw={600} size="lg">
                   {schema.name}
                 </Text>
                 <Button
-                  variant="subtle"
+                  variant="light"
+                  color="violet"
                   size="xs"
                   onClick={() => navigate(entriesPath(schema.id))}
                   rightSection={<ArrowRight size={16} />}
@@ -138,7 +138,9 @@ export const SchemaList = () => {
                     <Text size="md" fw={500}>
                       {field.name}
                     </Text>
-                    <Text size="sm">{field.type}</Text>
+                    <Text size="sm" ml={6}>
+                      {field.type}
+                    </Text>
                     {field.type === 'reference' &&
                       field.referenceTargetSchemaId && (
                         <Text size="sm">
@@ -149,11 +151,12 @@ export const SchemaList = () => {
                 ))}
               </Stack>
 
-              <EntityActions
-                mt="auto"
-                onEdit={() => navigate(schemaEditPath(schema.id))}
-                onDelete={() => openDeleteModal(schema)}
-              />
+              <div className="schema-card__actions">
+                <EntityActions
+                  onEdit={() => navigate(schemaEditPath(schema.id))}
+                  onDelete={() => openDeleteModal(schema)}
+                />
+              </div>
             </Card>
           ))}
         </SimpleGrid>

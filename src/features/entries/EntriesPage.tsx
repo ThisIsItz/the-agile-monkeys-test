@@ -5,6 +5,11 @@ import { confirmDelete } from '@/components/confirmDelete'
 import { EntityActions } from '@/components/EntityActions'
 import { ListPageHeader } from '@/components/ListPageHeader'
 import { NotFoundPage } from '@/components/NotFoundPage'
+import {
+  SCHEMAS_ROUTE,
+  entryEditPath,
+  newEntryPath
+} from '@/features/routes/paths'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import {
   Anchor,
@@ -23,11 +28,6 @@ import type { Entry, Schema } from '@shared/types'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import {
-  SCHEMAS_ROUTE,
-  entryEditPath,
-  newEntryPath
-} from '@/features/routes/paths'
 import { getNeedsReview } from './needsReview'
 import { getReferenceLabels } from './referenceLabels'
 
@@ -118,12 +118,9 @@ export const EntriesPage = () => {
     loadEntries()
   }, [schemaId])
 
-  if (loading) return <Loader />
   if (error instanceof ApiError && error.status === 404) {
     return <NotFoundPage />
   }
-  if (error) return <div>Error: {error.message}</div>
-  if (!schema) return null
 
   return (
     <div>
@@ -136,11 +133,16 @@ export const EntriesPage = () => {
         Back
       </Button>
       <ListPageHeader
-        title={`Entries for ${schema.name} schema`}
+        title={schema ? `Entries for ${schema.name} schema` : 'Entries'}
         actionLabel="Add Entry"
         onAction={() => navigate(newEntryPath(schemaId!))}
       />
-      {entries.length > 0 ? (
+      {error && <p>Error: {error.message}</p>}
+      {loading ? (
+        <Center mih={200}>
+          <Loader />
+        </Center>
+      ) : !schema ? null : entries.length > 0 ? (
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="md">
           {entries.map((entry) => (
             <Card key={entry.id} withBorder padding="lg" radius="md">
@@ -171,6 +173,14 @@ export const EntriesPage = () => {
                         >
                           {referenceLabels[String(value)] ?? String(value)}
                         </Anchor>
+                      ) : field.type === 'boolean' ? (
+                        <Badge
+                          color={value ? 'green' : 'gray'}
+                          variant="light"
+                          size="sm"
+                        >
+                          {value ? 'True' : 'False'}
+                        </Badge>
                       ) : (
                         String(value)
                       )}
@@ -179,7 +189,6 @@ export const EntriesPage = () => {
                 })}
 
                 <EntityActions
-                  mt="md"
                   onEdit={() =>
                     navigate(entryEditPath(schema.id, entry.id), {
                       state: { needsReview }

@@ -4,7 +4,7 @@ import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import { Loader } from '@mantine/core'
 import { type Entry, type Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EntryEditor } from './EntryEditor'
 import { getSchema } from '@/api/schemas'
 import { NotFoundPage } from '@/components/NotFoundPage'
@@ -17,6 +17,7 @@ export const EntryEditorPage = () => {
     schemaId: string
   }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const [entry, setEntry] = useState<Entry | undefined>(undefined)
   const [schema, setSchema] = useState<Schema | undefined>(undefined)
   const [schemaChanged, setSchemaChanged] = useState(false)
@@ -24,7 +25,13 @@ export const EntryEditorPage = () => {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const handleBack = () => navigate(entriesPath(schemaId!))
+  const handleBack = () => {
+    if (location.key !== 'default') {
+      navigate(-1)
+    } else {
+      navigate(entriesPath(schemaId!))
+    }
+  }
 
   useRealtimeEvent<{ schemaId: string }>('schemas:changed', (payload) => {
     if (payload.schemaId === schemaId) setSchemaChanged(true)

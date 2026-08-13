@@ -14,6 +14,6 @@ export function emitSchemasChanged(schemaId: string): void {
   io?.emit('schemas:changed', { schemaId })
 }
 
-export function emitEntriesChanged(schemaId: string): void {
-  io?.emit('entries:changed', { schemaId })
+export function emitEntriesChanged(schemaId: string, entryId: string): void {
+  io?.emit('entries:changed', { schemaId, entryId })
 }

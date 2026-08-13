@@ -1,8 +1,8 @@
 import { getEntry } from '@/api/entries'
+import { ReloadWarning } from '@/components/ReloadWarning'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
-import { Alert, Button, Loader, Stack, Text, Group } from '@mantine/core'
+import { Loader } from '@mantine/core'
 import { type Entry, type Schema } from '@shared/types'
-import { RotateCw, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { EntryEditor } from './EntryEditor'
@@ -17,6 +17,7 @@ export const EntryEditorPage = () => {
   const [entry, setEntry] = useState<Entry | undefined>(undefined)
   const [schema, setSchema] = useState<Schema | undefined>(undefined)
   const [schemaChanged, setSchemaChanged] = useState(false)
+  const [entryChanged, setEntryChanged] = useState(false)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -25,6 +26,16 @@ export const EntryEditorPage = () => {
   useRealtimeEvent<{ schemaId: string }>('schemas:changed', (payload) => {
     if (payload.schemaId === schemaId) setSchemaChanged(true)
   })
+
+  useRealtimeEvent<{ schemaId: string; entryId: string }>(
+    'entries:changed',
+    (payload) => {
+      if (!entryId) return
+      if (payload.schemaId === schemaId && payload.entryId === entryId) {
+        setEntryChanged(true)
+      }
+    }
+  )
 
   const handleReload = async () => {
     if (!schemaId) return
@@ -39,6 +50,7 @@ export const EntryEditorPage = () => {
       }
 
       setSchemaChanged(false)
+      setEntryChanged(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     }
@@ -73,34 +85,21 @@ export const EntryEditorPage = () => {
   return (
     <div>
       {schemaChanged && (
-        <Alert
-          color="yellow"
-          icon={<TriangleAlert size={16} />}
+        <ReloadWarning
           title="This schema was changed"
-          mb="md"
-        >
-          <Stack gap="sm">
-            <Text size="sm">
-              This schema changed while you were editing. Reload to use the
-              latest fields. Any unsaved changes will be lost.
-            </Text>
-
-            <Group align="center">
-              <Button
-                size="xs"
-                variant="outline"
-                color="orange"
-                onClick={handleReload}
-                leftSection={<RotateCw size={16} />}
-              >
-                Reload
-              </Button>
-            </Group>
-          </Stack>
-        </Alert>
+          message="This schema changed while you were editing. Reload to use the latest fields. Any unsaved changes will be lost."
+          onReload={handleReload}
+        />
+      )}
+      {entryChanged && (
+        <ReloadWarning
+          title="This entry was changed"
+          message="This entry was changed or deleted elsewhere while you were editing. Reload to see the latest version. Any unsaved changes will be lost."
+          onReload={handleReload}
+        />
       )}
       <EntryEditor
-        key={schema.updatedAt}
+        key={`${schema.updatedAt}-${entry?.updatedAt ?? 'new'}`}
         entry={entry}
         schema={schema}
         handleBack={handleBack}

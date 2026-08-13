@@ -61,9 +61,12 @@ export const EntriesPage = () => {
     }
   }
 
-  useRealtimeEvent<{ schemaId: string }>('entries:changed', (payload) => {
-    if (payload.schemaId === schemaId) refreshEntries()
-  })
+  useRealtimeEvent<{ schemaId: string; entryId: string }>(
+    'entries:changed',
+    (payload) => {
+      if (payload.schemaId === schemaId) refreshEntries()
+    }
+  )
 
   useEffect(() => {
     if (!schema) return

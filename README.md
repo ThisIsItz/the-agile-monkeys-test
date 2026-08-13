@@ -1,75 +1,119 @@
-# React + TypeScript + Vite
+# Headless CMS Admin
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small headless CMS admin application built as a frontend-focused take-home exercise.
 
-Currently, two official plugins are available:
+The application allows users to define content schemas, create and manage entries from those schemas, reference content across schemas, preview the impact of schema changes, and keep multiple clients in sync through real-time updates.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
 
-## React Compiler
+### Frontend
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React
+- TypeScript
+- Vite
+- Mantine
+- Mantine Form
+- React Router
+- Socket.IO Client
+- Lucide
 
-## Expanding the ESLint configuration
+### Backend
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Node.js
+- Express
+- TypeScript
+- SQLite with `better-sqlite3`
+- Socket.IO
+- Zod
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Testing
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Vitest
+- React Testing Library
+- jsdom
+- In-memory SQLite for backend tests
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Requirements
 
+- Node.js 22.12 or newer
+- npm
+
+## Install and Run
+
+Install dependencies:
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app is split into a Vite frontend and an Express API, so you need **two terminals running at the same time**—the frontend alone cannot reach `/api` or `/socket.io`:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# terminal 1
+npm run dev         # frontend, with /api and /socket.io proxied to the API
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+# terminal 2
+npm run dev:server  # API + Socket.IO server on port 3001
 ```
+
+Open the URL printed by Vite in the terminal.
+
+No additional configuration, environment variables, database setup, migrations, or external accounts are required for local development.
+
+On first run, the application automatically creates the local SQLite database and seeds a small amount of sample content so the main functionality can be explored immediately. The seed includes related `Author` and `Book` schemas and example entries, and only runs once per database — deleting sample content through the application will not cause it to be recreated on the next restart.
+
+## Available Commands
+
+```bash
+npm run dev         # start the frontend dev server
+npm run dev:server  # start the API and Socket.IO server
+npm run build       # type-check and build the frontend for production
+npm run preview     # preview the production build locally
+npm test            # run the test suite in watch mode
+npm run test:run    # run the test suite once
+npm run typecheck   # run TypeScript project checks
+npm run lint        # run ESLint
+```
+
+## Features
+
+### Schemas
+
+Schemas can be created, edited and deleted. Each schema is a named collection of fields that defines the shape of its entries.
+
+Supported field types are:
+
+- Text
+- Number
+- Boolean
+- Date
+- Reference
+
+Fields can also be marked as required. Reference fields point to another schema and allow relationships between content types.
+
+### Entries
+
+Entries are created and edited through a form generated from their schema's field definitions, and validated accordingly.
+
+### Schema Change Preview
+
+Editing a schema previews the impact of the change—such as fields being removed, retyped, or made required—on existing entries before it is applied.
+
+### Schema Evolution
+
+- **Safe field migrations** — unambiguous type conversions (e.g. `"1993"` ↔ `1993`) are applied automatically; ambiguous values (e.g. `"vintage"` → number) are left untouched rather than guessed.
+- **Needs review flow** — entries left with incompatible data are flagged `Needs review`, with the affected field highlighted in the entry editor until fixed and saved. Tracked in navigation state rather than persisted, so it's ephemeral (lost on refresh)—an intentional scope trade-off.
+- **Schema deletion preview** — deleting a schema previews how many entries would be removed, and is blocked while another schema still references it.
+
+### Read API
+
+Besides the admin CRUD API, content is exposed read-only by schema name for external consumption:
+
+- `GET /api/content/:schemaName` — all entries for a schema
+- `GET /api/content/:schemaName/:entryId` — a single entry
+
+Fields are keyed by name instead of internal ID, decoupling consumers from schema internals.
+
+### Real-time Sync
+
+Schema and entry changes made in one client are broadcast to all connected clients via Socket.IO, so open browser tabs stay in sync automatically.

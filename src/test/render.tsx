@@ -5,11 +5,13 @@ import { MemoryRouter } from 'react-router-dom'
 
 export function renderWithProviders(
   ui: ReactElement,
-  { route = '/' }: { route?: string } = {}
+  { route = '/', state }: { route?: string; state?: unknown } = {}
 ) {
   return render(
     <MantineProvider>
-      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={[{ pathname: route, state }]}>
+        {ui}
+      </MemoryRouter>
     </MantineProvider>
   )
 }

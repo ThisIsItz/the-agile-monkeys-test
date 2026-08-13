@@ -5,6 +5,11 @@ import { confirmDelete } from '@/components/confirmDelete'
 import { EntityActions } from '@/components/EntityActions'
 import { ListPageHeader } from '@/components/ListPageHeader'
 import { NotFoundPage } from '@/components/NotFoundPage'
+import {
+  SCHEMAS_ROUTE,
+  entryEditPath,
+  newEntryPath
+} from '@/features/routes/paths'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import {
   Anchor,
@@ -23,11 +28,6 @@ import type { Entry, Schema } from '@shared/types'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import {
-  SCHEMAS_ROUTE,
-  entryEditPath,
-  newEntryPath
-} from '@/features/routes/paths'
 import { getNeedsReview } from './needsReview'
 import { getReferenceLabels } from './referenceLabels'
 
@@ -187,7 +187,6 @@ export const EntriesPage = () => {
                 })}
 
                 <EntityActions
-                  mt="md"
                   onEdit={() =>
                     navigate(entryEditPath(schema.id, entry.id), {
                       state: { needsReview }

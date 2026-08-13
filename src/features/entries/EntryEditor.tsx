@@ -19,11 +19,18 @@ const getEntryInitialValues = (schema: Schema, entry?: Entry): EntryInput => ({
 export const EntryEditor = ({
   entry,
   schema,
-  handleBack
+  handleBack,
+  handleSaved,
+  reviewFields
 }: {
   entry?: Entry
   schema: Schema
   handleBack: () => void
+  handleSaved: () => void
+  reviewFields: {
+    fieldId?: string
+    fieldName: string
+  }[]
 }) => {
   const [error, setError] = useState<Error | null>(null)
   const [referenceOptions, setReferenceOptions] = useState<
@@ -43,7 +50,7 @@ export const EntryEditor = ({
         await createEntry(schema.id, values)
       }
 
-      handleBack()
+      handleSaved()
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'))
     }
@@ -79,14 +86,23 @@ export const EntryEditor = ({
       )}
       <form onSubmit={entryForm.onSubmit(handleFormSubmit)}>
         <Stack mt="md">
-          {schema.fields.map((field) => (
-            <EntryFieldInput
-              key={field.id}
-              field={field}
-              form={entryForm}
-              referenceOptions={referenceOptions[field.id] ?? []}
-            />
-          ))}
+          {schema.fields.map((field) => {
+            const needsReview = reviewFields.some(
+              (item) =>
+                item.fieldId === field.id ||
+                (!item.fieldId && item.fieldName === field.name)
+            )
+
+            return (
+              <EntryFieldInput
+                key={field.id}
+                field={field}
+                form={entryForm}
+                referenceOptions={referenceOptions[field.id] ?? []}
+                needsReview={needsReview}
+              />
+            )
+          })}
           <Button type="submit" loading={entryForm.submitting}>
             {entry ? 'Save changes' : 'Create entry'}
           </Button>

@@ -14,3 +14,11 @@ body {
   min-height: 100vh;
   padding: 2rem;
 }
+
+.entry-field-input__control--needs-review {
+  --input-bd: var(--mantine-color-orange-6);
+}
+
+.entry-field-input__review-note {
+  color: var(--mantine-color-orange-6);
+}

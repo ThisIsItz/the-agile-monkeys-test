@@ -125,7 +125,7 @@ describe('SchemaEditor', () => {
           fieldId: 'f1',
           fieldName: 'subtitle',
           changeType: 'made_required',
-          affectedEntries: [{ id: 'entry-1', label: 'entry-1' }]
+          affectedEntries: []
         }
       ]
     })

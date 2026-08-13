@@ -25,12 +25,34 @@ export const EntryEditorPage = () => {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
 
+  const needsReview =
+    (
+      location.state as {
+        needsReview?: {
+          entryId: string
+          fieldId?: string
+          fieldName: string
+        }[]
+      } | null
+    )?.needsReview ?? []
+
+  const reviewFields = needsReview.filter((item) => item.entryId === entryId)
+
   const handleBack = () => {
     if (location.key !== 'default') {
       navigate(-1)
     } else {
       navigate(entriesPath(schemaId!))
     }
+  }
+
+  const handleSaved = () => {
+    const remainingNeedsReview = needsReview.filter(
+      (item) => item.entryId !== entryId
+    )
+    navigate(entriesPath(schemaId!), {
+      state: { needsReview: remainingNeedsReview }
+    })
   }
 
   useRealtimeEvent<{ schemaId: string }>('schemas:changed', (payload) => {
@@ -116,6 +138,8 @@ export const EntryEditorPage = () => {
         entry={entry}
         schema={schema}
         handleBack={handleBack}
+        handleSaved={handleSaved}
+        reviewFields={reviewFields}
       />
     </div>
   )

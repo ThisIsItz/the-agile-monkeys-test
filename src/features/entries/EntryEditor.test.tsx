@@ -39,11 +39,16 @@ describe('EntryEditor', () => {
       createdAt: '',
       updatedAt: ''
     })
-    const handleBack = vi.fn()
+    const handleSaved = vi.fn()
     const user = userEvent.setup()
 
     renderWithProviders(
-      <EntryEditor schema={carSchemaTextOnly} handleBack={handleBack} />
+      <EntryEditor
+        schema={carSchemaTextOnly}
+        handleBack={vi.fn()}
+        handleSaved={handleSaved}
+        reviewFields={[]}
+      />
     )
 
     await user.type(screen.getByLabelText(/^brand/), 'Tesla')
@@ -54,7 +59,7 @@ describe('EntryEditor', () => {
         data: { 'c-brand': 'Tesla' }
       })
     )
-    await waitFor(() => expect(handleBack).toHaveBeenCalled())
+    await waitFor(() => expect(handleSaved).toHaveBeenCalled())
   })
 
   it('pre-fills form values from entry.data keyed by field id when editing', async () => {
@@ -71,6 +76,8 @@ describe('EntryEditor', () => {
         schema={carSchemaTextOnly}
         entry={existingEntry}
         handleBack={vi.fn()}
+        handleSaved={vi.fn()}
+        reviewFields={[]}
       />
     )
 
@@ -129,7 +136,12 @@ describe('EntryEditor', () => {
 
     const user = userEvent.setup()
     renderWithProviders(
-      <EntryEditor schema={carSchemaWithReference} handleBack={vi.fn()} />
+      <EntryEditor
+        schema={carSchemaWithReference}
+        handleBack={vi.fn()}
+        handleSaved={vi.fn()}
+        reviewFields={[]}
+      />
     )
 
     const referenceSelect = await screen.findByRole('combobox', {

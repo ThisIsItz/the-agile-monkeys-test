@@ -4,15 +4,17 @@ import type { FieldChangeImpact, SchemaPreviewResponse } from '@shared/types'
 const getChangeLabel = (change: FieldChangeImpact): string => {
   switch (change.changeType) {
     case 'renamed':
-      return `Renamed from "${change.before}" to "${change.after}"`
+      return `Field renamed from "${change.before}" to "${change.after}."`
     case 'deleted':
-      return 'Field will be deleted'
+      return 'This field will be removed from the schema.'
     case 'retyped':
-      return `Type changed from ${change.before} to ${change.after}`
+      return `Field type will from ${change.before} to ${change.after}.`
     case 'made_required':
-      return 'Field will become required'
+      return 'This field will become required.'
     case 'reference_target_changed':
-      return 'Reference target changed'
+      return 'This field will reference a different schema.'
+    case 'added_required':
+      return 'Existing entries do not have a value for this field yet.'
   }
 }
 
@@ -41,7 +43,10 @@ export const SchemaChangePreviewModal = ({
         </Text>
         <Stack gap="md">
           {preview?.changes.map((change, index) => (
-            <Stack key={`${change.fieldId}-${change.changeType}`} gap={2}>
+            <Stack
+              key={`${change.fieldName}-${change.changeType}-${index}`}
+              gap={2}
+            >
               <Text>
                 <Text span fw={600}>
                   Field:

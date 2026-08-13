@@ -79,6 +79,14 @@ export function diffSchemaFields(
     }
   }
 
+  const existingIds = new Set(existing.fields.map((field) => field.id))
+  for (const field of input.fields) {
+    const isNew = !field.id || !existingIds.has(field.id)
+    if (isNew && field.required) {
+      changes.push({ fieldName: field.name, changeType: 'added_required' })
+    }
+  }
+
   return changes
 }
 
@@ -176,6 +184,12 @@ export function findAffectedEntries(
               return getEntryById(change.after, value) === undefined
             })
             .map((entry) => entry.id)
+        }
+
+      case 'added_required':
+        return {
+          ...change,
+          affectedEntryIds: entries.map((entry) => entry.id)
         }
     }
   })

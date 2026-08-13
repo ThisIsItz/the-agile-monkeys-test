@@ -42,6 +42,7 @@ export type FieldChange =
   | RetypedFieldChange
   | MadeRequiredFieldChange
   | ReferenceTargetChangedFieldChange
+  | AddedRequiredFieldChange
 
 interface RenamedFieldChange {
   fieldId: string
@@ -77,6 +78,11 @@ interface ReferenceTargetChangedFieldChange {
   changeType: 'reference_target_changed'
   before: string | null
   after: string | null
+}
+
+interface AddedRequiredFieldChange {
+  fieldName: string
+  changeType: 'added_required'
 }
 
 export type FieldChangeImpact = FieldChange & { affectedEntryIds: string[] }

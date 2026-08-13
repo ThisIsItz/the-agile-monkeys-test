@@ -67,6 +67,11 @@ export const fieldChangeImpactSchema = z.discriminatedUnion('changeType', [
     changeType: z.literal('reference_target_changed'),
     before: z.string().nullable(),
     after: z.string().nullable()
+  }),
+  z.object({
+    fieldName: z.string(),
+    affectedEntryIds: z.array(z.string()),
+    changeType: z.literal('added_required')
   })
 ])
 

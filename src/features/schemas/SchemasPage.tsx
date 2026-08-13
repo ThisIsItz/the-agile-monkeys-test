@@ -2,6 +2,7 @@ import { deleteSchema, getSchemas } from '@/api/schemas.ts'
 import { confirmDelete } from '@/components/confirmDelete'
 import { EntityActions } from '@/components/EntityActions'
 import { ListPageHeader } from '@/components/ListPageHeader'
+import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import {
   Button,
   Card,
@@ -47,6 +48,19 @@ export const SchemaList = () => {
 
   const referenceTargetName = (targetId: string) =>
     schemas.find((schema) => schema.id === targetId)?.name ?? 'Unknown'
+
+  const refreshSchemas = async () => {
+    try {
+      const data = await getSchemas()
+      setSchemas(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    }
+  }
+
+  useRealtimeEvent('schemas:changed', () => {
+    refreshSchemas()
+  })
 
   useEffect(() => {
     const loadSchemas = async () => {

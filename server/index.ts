@@ -1,7 +1,12 @@
+import http from 'node:http'
 import { createApp } from './app.js'
+import { initRealtime } from './realtime.js'
 
 const port = Number(process.env.PORT ?? 3001)
 
-createApp().listen(port, () => {
+const httpServer = http.createServer(createApp())
+initRealtime(httpServer)
+
+httpServer.listen(port, () => {
   console.log(`API listening on http://localhost:${port}`)
 })

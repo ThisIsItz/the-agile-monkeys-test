@@ -3,6 +3,7 @@ import { getSchema } from '@/api/schemas'
 import { confirmDelete } from '@/components/confirmDelete'
 import { EntityActions } from '@/components/EntityActions'
 import { ListPageHeader } from '@/components/ListPageHeader'
+import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import {
   Anchor,
   Button,
@@ -29,7 +30,6 @@ export const EntriesPage = () => {
   >({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
   useEffect(() => {
     const loadEntries = async () => {
       try {
@@ -50,6 +50,20 @@ export const EntriesPage = () => {
 
     loadEntries()
   }, [schemaId])
+
+  const refreshEntries = async () => {
+    if (!schemaId) return
+    try {
+      const data = await getEntries(schemaId)
+      setEntries(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    }
+  }
+
+  useRealtimeEvent<{ schemaId: string }>('entries:changed', (payload) => {
+    if (payload.schemaId === schemaId) refreshEntries()
+  })
 
   useEffect(() => {
     if (!schema) return
@@ -75,7 +89,6 @@ export const EntriesPage = () => {
               getEntries(targetSchemaId)
             ])
             const titleField = targetSchema.fields[0]
-
             for (const targetEntry of targetEntries) {
               const value = titleField
                 ? targetEntry.data[titleField.id]

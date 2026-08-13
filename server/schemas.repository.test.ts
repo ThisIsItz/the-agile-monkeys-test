@@ -3,6 +3,7 @@ import { db } from './db.js'
 import {
   createSchema,
   getSchemaById,
+  getSchemaByName,
   updateSchema
 } from './schemas.repository.js'
 import { HttpError } from './http-error.js'
@@ -65,6 +66,21 @@ describe('schemas.repository', () => {
 
       expect(thrown).toBeInstanceOf(HttpError)
       expect((thrown as HttpError).status).toBe(400)
+    })
+  })
+
+  describe('getSchemaByName', () => {
+    it('finds a schema by its exact name', () => {
+      const created = createSchema({ name: 'Car', fields: [] })
+
+      expect(getSchemaByName('Car')?.id).toBe(created.id)
+    })
+
+    it('is case-insensitive', () => {
+      const created = createSchema({ name: 'Car', fields: [] })
+
+      expect(getSchemaByName('car')?.id).toBe(created.id)
+      expect(getSchemaByName('CAR')?.id).toBe(created.id)
     })
   })
 

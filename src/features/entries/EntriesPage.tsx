@@ -118,12 +118,9 @@ export const EntriesPage = () => {
     loadEntries()
   }, [schemaId])
 
-  if (loading) return <Loader />
   if (error instanceof ApiError && error.status === 404) {
     return <NotFoundPage />
   }
-  if (error) return <div>Error: {error.message}</div>
-  if (!schema) return null
 
   return (
     <div>
@@ -136,11 +133,16 @@ export const EntriesPage = () => {
         Back
       </Button>
       <ListPageHeader
-        title={`Entries for ${schema.name} schema`}
+        title={schema ? `Entries for ${schema.name} schema` : 'Entries'}
         actionLabel="Add Entry"
         onAction={() => navigate(newEntryPath(schemaId!))}
       />
-      {entries.length > 0 ? (
+      {error && <p>Error: {error.message}</p>}
+      {loading ? (
+        <Center mih={200}>
+          <Loader />
+        </Center>
+      ) : !schema ? null : entries.length > 0 ? (
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="md">
           {entries.map((entry) => (
             <Card key={entry.id} withBorder padding="lg" radius="md">

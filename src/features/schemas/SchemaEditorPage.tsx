@@ -1,7 +1,7 @@
 import { getSchema } from '@/api/schemas'
 import { ReloadWarning } from '@/components/ReloadWarning'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
-import { Button, Loader, Title } from '@mantine/core'
+import { Button, Center, Loader, Title } from '@mantine/core'
 import { type Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -54,7 +54,6 @@ export const SchemaEditorPage = () => {
     loadSchema()
   }, [id])
 
-  if (loading) return <Loader />
   if (error instanceof ApiError && error.status === 404) {
     return <NotFoundPage />
   }
@@ -70,7 +69,7 @@ export const SchemaEditorPage = () => {
       >
         Back
       </Button>
-      <Title>{schema ? 'Edit Schema' : 'Create Schema'}</Title>
+      <Title>{id ? 'Edit Schema' : 'Create Schema'}</Title>
       {schemaChanged && (
         <ReloadWarning
           title="This schema was changed"
@@ -78,11 +77,17 @@ export const SchemaEditorPage = () => {
           onReload={handleReload}
         />
       )}
-      <SchemaEditor
-        key={schema?.updatedAt ?? 'new'}
-        schema={schema}
-        handleBack={handleBack}
-      />
+      {loading ? (
+        <Center mih={200}>
+          <Loader />
+        </Center>
+      ) : (
+        <SchemaEditor
+          key={schema?.updatedAt ?? 'new'}
+          schema={schema}
+          handleBack={handleBack}
+        />
+      )}
     </div>
   )
 }

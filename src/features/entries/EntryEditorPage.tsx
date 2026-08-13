@@ -1,7 +1,7 @@
 import { getEntry } from '@/api/entries'
 import { ReloadWarning } from '@/components/ReloadWarning'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
-import { Button, Loader, Title } from '@mantine/core'
+import { Button, Center, Loader, Title } from '@mantine/core'
 import { type Entry, type Schema } from '@shared/types'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -100,12 +100,10 @@ export const EntryEditorPage = () => {
     loadData()
   }, [entryId, schemaId])
 
-  if (loading) return <Loader />
   if (error instanceof ApiError && error.status === 404) {
     return <NotFoundPage />
   }
   if (error) return <div>Error: {error.message}</div>
-  if (!schema) return null
 
   return (
     <div>
@@ -117,7 +115,7 @@ export const EntryEditorPage = () => {
       >
         Back
       </Button>
-      <Title>{entry ? 'Edit Entry' : 'Create Entry'}</Title>
+      <Title>{entryId ? 'Edit Entry' : 'Create Entry'}</Title>
       {schemaChanged && (
         <ReloadWarning
           title="This schema was changed"
@@ -132,13 +130,19 @@ export const EntryEditorPage = () => {
           onReload={handleReload}
         />
       )}
-      <EntryEditor
-        key={`${schema.updatedAt}-${entry?.updatedAt ?? 'new'}`}
-        entry={entry}
-        schema={schema}
-        handleSaved={handleSaved}
-        reviewFields={reviewFields}
-      />
+      {loading || !schema ? (
+        <Center mih={200}>
+          <Loader />
+        </Center>
+      ) : (
+        <EntryEditor
+          key={`${schema.updatedAt}-${entry?.updatedAt ?? 'new'}`}
+          entry={entry}
+          schema={schema}
+          handleSaved={handleSaved}
+          reviewFields={reviewFields}
+        />
+      )}
     </div>
   )
 }

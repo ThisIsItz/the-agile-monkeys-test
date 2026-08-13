@@ -94,8 +94,6 @@ export const SchemaList = () => {
     loadSchemas()
   }, [])
 
-  if (loading) return <Loader />
-
   return (
     <div>
       <ListPageHeader
@@ -105,7 +103,11 @@ export const SchemaList = () => {
         mt="xl"
       />
       {error && <p className="schema-list__error">{error}</p>}
-      {schemas.length > 0 ? (
+      {loading ? (
+        <Center mih={200}>
+          <Loader />
+        </Center>
+      ) : schemas.length > 0 ? (
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="md">
           {schemas.map((schema) => (
             <Card

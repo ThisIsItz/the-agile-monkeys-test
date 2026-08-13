@@ -391,11 +391,9 @@ describe('findAffectedEntries', () => {
     })
     const [fieldA, fieldB] = schema.fields
     const entryWithA = createEntry(schema.id, {
-      data: { [fieldA.id]: 'value-a' }
+      data: { [fieldA.id]: 'value-a', [fieldB.id]: 'value-b' }
     })
-    const entryWithB = createEntry(schema.id, {
-      data: { [fieldB.id]: 'value-b' }
-    })
+    const entryWithB = createEntry(schema.id, { data: {} })
 
     const input = {
       name: 'Book',

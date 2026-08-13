@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { diffSchemaFields } from './schema-evolution.js'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { db } from './db/db.js'
+import { createEntry } from '@server/entries/entries.repository.js'
+import { createSchema } from '@server/schemas/schemas.repository.js'
+import { diffSchemaFields, findAffectedEntries } from './schema-evolution.js'
 import type { Field, FieldInput, Schema } from '@shared/types.js'
 
 function makeField(overrides: Partial<Field> = {}): Field {
@@ -207,5 +210,165 @@ describe('diffSchemaFields', () => {
     })
 
     expect(changes).toEqual([])
+  })
+})
+
+describe('findAffectedEntries', () => {
+  beforeEach(() => {
+    db.exec('DELETE FROM entries; DELETE FROM fields; DELETE FROM schemas;')
+  })
+
+  function impactFor(
+    impacts: ReturnType<typeof findAffectedEntries>,
+    changeType: string
+  ) {
+    const impact = impacts.find((c) => c.changeType === changeType)
+    if (!impact) throw new Error(`No "${changeType}" change found`)
+    return impact
+  }
+
+  it('reports no affected entries for a renamed field', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'title', type: 'text', required: false }]
+    })
+    const [titleField] = schema.fields
+    createEntry(schema.id, { data: { [titleField.id]: 'Dune' } })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(titleField, { name: 'headline' })]
+    }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema.id, changes, input)
+
+    expect(impactFor(impacts, 'renamed').affectedEntryIds).toEqual([])
+  })
+
+  it('affects entries with a value for a deleted field, not entries without one', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'title', type: 'text', required: false }]
+    })
+    const [titleField] = schema.fields
+    const withValue = createEntry(schema.id, {
+      data: { [titleField.id]: 'Dune' }
+    })
+    createEntry(schema.id, { data: {} })
+
+    const input = { name: 'Book', fields: [] }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema.id, changes, input)
+
+    expect(impactFor(impacts, 'deleted').affectedEntryIds).toEqual([
+      withValue.id
+    ])
+  })
+
+  it('affects entries whose stored value no longer matches the new type', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'pages', type: 'text', required: false }]
+    })
+    const [pagesField] = schema.fields
+    const entry = createEntry(schema.id, {
+      data: { [pagesField.id]: 'not-a-number' }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(pagesField, { type: 'number' })]
+    }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema.id, changes, input)
+
+    expect(impactFor(impacts, 'retyped').affectedEntryIds).toEqual([entry.id])
+  })
+
+  it('affects entries missing a value for a field made required, not entries with one', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'subtitle', type: 'text', required: false }]
+    })
+    const [subtitleField] = schema.fields
+    const withoutValue = createEntry(schema.id, { data: {} })
+    createEntry(schema.id, { data: { [subtitleField.id]: 'A Novel' } })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(subtitleField, { required: true })]
+    }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema.id, changes, input)
+
+    expect(impactFor(impacts, 'made_required').affectedEntryIds).toEqual([
+      withoutValue.id
+    ])
+  })
+
+  it('affects entries whose reference no longer exists in the new target schema', () => {
+    const oldTarget = createSchema({ name: 'Author', fields: [] })
+    const oldTargetEntry = createEntry(oldTarget.id, { data: {} })
+    const newTarget = createSchema({ name: 'Publisher', fields: [] })
+
+    const schema = createSchema({
+      name: 'Book',
+      fields: [
+        {
+          name: 'author',
+          type: 'reference',
+          required: false,
+          referenceTargetSchemaId: oldTarget.id
+        }
+      ]
+    })
+    const [authorField] = schema.fields
+    const entry = createEntry(schema.id, {
+      data: { [authorField.id]: oldTargetEntry.id }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [
+        toInput(authorField, { referenceTargetSchemaId: newTarget.id })
+      ]
+    }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema.id, changes, input)
+
+    expect(
+      impactFor(impacts, 'reference_target_changed').affectedEntryIds
+    ).toEqual([entry.id])
+  })
+
+  it('computes affected entries independently per field when changes are combined', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [
+        { name: 'a', type: 'text', required: false },
+        { name: 'b', type: 'text', required: false }
+      ]
+    })
+    const [fieldA, fieldB] = schema.fields
+    const entryWithA = createEntry(schema.id, {
+      data: { [fieldA.id]: 'value-a' }
+    })
+    const entryWithB = createEntry(schema.id, {
+      data: { [fieldB.id]: 'value-b' }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(fieldB, { required: true })]
+    }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema.id, changes, input)
+
+    expect(impactFor(impacts, 'deleted').affectedEntryIds).toEqual([
+      entryWithA.id
+    ])
+    expect(impactFor(impacts, 'made_required').affectedEntryIds).toEqual([
+      entryWithB.id
+    ])
   })
 })

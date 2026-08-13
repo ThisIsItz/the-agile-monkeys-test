@@ -3,7 +3,6 @@ import {
   getSchemas,
   previewSchemaDeletion
 } from '@/api/schemas.ts'
-import { confirmDelete } from '@/components/confirmDelete'
 import { EntityActions } from '@/components/EntityActions'
 import { ListPageHeader } from '@/components/ListPageHeader'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'

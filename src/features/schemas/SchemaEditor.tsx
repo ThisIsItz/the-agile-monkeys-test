@@ -172,6 +172,7 @@ export const SchemaEditor = ({
         }}
         onConfirm={handleApplyChanges}
         preview={preview}
+        schema={schema ?? null}
       />
       <form onSubmit={schemaForm.onSubmit(handleFormSubmit)}>
         <TextInput

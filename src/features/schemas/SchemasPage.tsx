@@ -18,6 +18,11 @@ import type { Schema } from '@shared/types'
 import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  NEW_SCHEMA_ROUTE,
+  entriesPath,
+  schemaEditPath
+} from '@/features/routes/paths'
 
 export const SchemaList = () => {
   const navigate = useNavigate()
@@ -84,7 +89,7 @@ export const SchemaList = () => {
       <ListPageHeader
         title="Schemas"
         actionLabel="Add schema"
-        onAction={() => navigate('/schemas/new')}
+        onAction={() => navigate(NEW_SCHEMA_ROUTE)}
       />
       {error && <p className="schema-list__error">{error}</p>}
 
@@ -109,7 +114,7 @@ export const SchemaList = () => {
                 <Button
                   variant="subtle"
                   size="xs"
-                  onClick={() => navigate(`/schemas/${schema.id}/entries`)}
+                  onClick={() => navigate(entriesPath(schema.id))}
                   rightSection={<ArrowRight size={16} />}
                 >
                   View entries
@@ -135,7 +140,7 @@ export const SchemaList = () => {
 
               <EntityActions
                 mt="auto"
-                onEdit={() => navigate(`/schemas/${schema.id}/edit`)}
+                onEdit={() => navigate(schemaEditPath(schema.id))}
                 onDelete={() => openDeleteModal(schema)}
               />
             </Card>

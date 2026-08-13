@@ -21,6 +21,11 @@ import type { Entry, Schema } from '@shared/types'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import {
+  SCHEMAS_ROUTE,
+  entryEditPath,
+  newEntryPath
+} from '@/features/routes/paths'
 
 export const EntriesPage = () => {
   const navigate = useNavigate()
@@ -161,7 +166,7 @@ export const EntriesPage = () => {
     <div>
       <Button
         variant="subtle"
-        onClick={() => navigate('/schemas')}
+        onClick={() => navigate(SCHEMAS_ROUTE)}
         leftSection={<ArrowLeft size={16} />}
         color="gray"
       >
@@ -170,7 +175,7 @@ export const EntriesPage = () => {
       <ListPageHeader
         title={`Entries for ${schema.name} schema`}
         actionLabel="Add Entry"
-        onAction={() => navigate(`/schemas/${schemaId}/entries/new`)}
+        onAction={() => navigate(newEntryPath(schemaId!))}
       />
       {entries.length > 0 ? (
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="md">
@@ -190,7 +195,10 @@ export const EntriesPage = () => {
                         field.referenceTargetSchemaId ? (
                         <Anchor
                           component={Link}
-                          to={`/schemas/${field.referenceTargetSchemaId}/entries/${value}/edit`}
+                          to={entryEditPath(
+                            field.referenceTargetSchemaId,
+                            String(value)
+                          )}
                           size="sm"
                         >
                           {referenceLabels[String(value)] ?? String(value)}
@@ -204,9 +212,7 @@ export const EntriesPage = () => {
 
                 <EntityActions
                   mt="md"
-                  onEdit={() =>
-                    navigate(`/schemas/${schema.id}/entries/${entry.id}/edit`)
-                  }
+                  onEdit={() => navigate(entryEditPath(schema.id, entry.id))}
                   onDelete={() => openDeleteModal(entry)}
                 />
               </Stack>

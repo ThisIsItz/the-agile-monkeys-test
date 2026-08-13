@@ -27,6 +27,7 @@ export const SchemaEditor = ({
 }) => {
   const [availableSchemas, setAvailableSchemas] = useState<Schema[]>([])
   const [error, setError] = useState<string | null>(null)
+
   const schemaForm = useForm<SchemaInput>({
     initialValues: {
       name: schema?.name ?? '',

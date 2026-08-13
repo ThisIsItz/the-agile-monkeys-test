@@ -4,6 +4,7 @@ import {
   previewSchemaChange,
   updateSchema
 } from '@/api/schemas'
+import { FormCard } from '@/components/FormCard'
 import { needsReviewFromPreview } from '@/features/entries/needsReview'
 import { entriesPath } from '@/features/routes/paths'
 import {
@@ -16,8 +17,7 @@ import {
   Select,
   Stack,
   Text,
-  TextInput,
-  Title
+  TextInput
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
@@ -178,10 +178,7 @@ export const SchemaEditor = ({
         preview={preview}
       />
       <form onSubmit={schemaForm.onSubmit(handleFormSubmit)}>
-        <Card withBorder radius="sm" padding="lg" maw={640} mx="auto" mt="md">
-          <Title order={3} mb="md">
-            {schema ? schema.name : 'New schema'}
-          </Title>
+        <FormCard title={schema ? schema.name : 'New schema'}>
           <Stack gap="lg">
             <TextInput
               {...schemaForm.getInputProps('name')}
@@ -281,7 +278,7 @@ export const SchemaEditor = ({
               {schema ? 'Save changes' : 'Create schema'}
             </Button>
           </Stack>
-        </Card>
+        </FormCard>
       </form>
     </div>
   )

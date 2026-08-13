@@ -1,5 +1,6 @@
 import { createEntry, updateEntry } from '@/api/entries'
-import { Alert, Button, Card, Stack, Title } from '@mantine/core'
+import { FormCard } from '@/components/FormCard'
+import { Alert, Button, Stack } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import type { Entry, EntryInput, Field, Schema } from '@shared/types'
 import { TriangleAlert } from 'lucide-react'
@@ -76,10 +77,7 @@ export const EntryEditor = ({
         </Alert>
       )}
       <form onSubmit={entryForm.onSubmit(handleFormSubmit)}>
-        <Card withBorder radius="sm" padding="lg" maw={640} mx="auto" mt="md">
-          <Title order={3} mb="md">
-            {schema.name}
-          </Title>
+        <FormCard title={schema.name}>
           <Stack gap="md">
             {schema.fields.map((field) => {
               const needsReview = isFieldFlagged(reviewFields, field)
@@ -102,7 +100,7 @@ export const EntryEditor = ({
               {entry ? 'Save changes' : 'Create entry'}
             </Button>
           </Stack>
-        </Card>
+        </FormCard>
       </form>
     </div>
   )

@@ -5,6 +5,7 @@ import type { Entry, EntryInput, Field, Schema } from '@shared/types'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EntryFieldInput } from './EntryFieldInput'
+import { isFieldFlagged, type NeedsReviewItem } from './needsReview'
 import { getReferenceOptions } from './referenceOptions'
 
 const getEntryInitialValues = (schema: Schema, entry?: Entry): EntryInput => ({
@@ -27,10 +28,7 @@ export const EntryEditor = ({
   schema: Schema
   handleBack: () => void
   handleSaved: () => void
-  reviewFields: {
-    fieldId?: string
-    fieldName: string
-  }[]
+  reviewFields: NeedsReviewItem[]
 }) => {
   const [error, setError] = useState<Error | null>(null)
   const [referenceOptions, setReferenceOptions] = useState<
@@ -87,11 +85,7 @@ export const EntryEditor = ({
       <form onSubmit={entryForm.onSubmit(handleFormSubmit)}>
         <Stack mt="md">
           {schema.fields.map((field) => {
-            const needsReview = reviewFields.some(
-              (item) =>
-                item.fieldId === field.id ||
-                (!item.fieldId && item.fieldName === field.name)
-            )
+            const needsReview = isFieldFlagged(reviewFields, field)
 
             return (
               <EntryFieldInput

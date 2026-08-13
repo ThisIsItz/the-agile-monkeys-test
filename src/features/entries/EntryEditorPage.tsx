@@ -10,6 +10,7 @@ import { getSchema } from '@/api/schemas'
 import { NotFoundPage } from '@/components/NotFoundPage'
 import { ApiError } from '@/api/client'
 import { entriesPath } from '@/features/routes/paths'
+import { getNeedsReview, withoutEntry } from './needsReview'
 
 export const EntryEditorPage = () => {
   const { entryId, schemaId } = useParams<{
@@ -25,16 +26,7 @@ export const EntryEditorPage = () => {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const needsReview =
-    (
-      location.state as {
-        needsReview?: {
-          entryId: string
-          fieldId?: string
-          fieldName: string
-        }[]
-      } | null
-    )?.needsReview ?? []
+  const needsReview = getNeedsReview(location.state)
 
   const reviewFields = needsReview.filter((item) => item.entryId === entryId)
 
@@ -47,11 +39,8 @@ export const EntryEditorPage = () => {
   }
 
   const handleSaved = () => {
-    const remainingNeedsReview = needsReview.filter(
-      (item) => item.entryId !== entryId
-    )
     navigate(entriesPath(schemaId!), {
-      state: { needsReview: remainingNeedsReview }
+      state: { needsReview: withoutEntry(needsReview, entryId) }
     })
   }
 

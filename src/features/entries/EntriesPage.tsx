@@ -28,22 +28,14 @@ import {
   entryEditPath,
   newEntryPath
 } from '@/features/routes/paths'
+import { getNeedsReview } from './needsReview'
 import { getReferenceLabels } from './referenceLabels'
 
 export const EntriesPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { schemaId } = useParams<{ schemaId: string }>()
-  const needsReview =
-    (
-      location.state as {
-        needsReview?: {
-          entryId: string
-          fieldId?: string
-          fieldName: string
-        }[]
-      } | null
-    )?.needsReview ?? []
+  const needsReview = getNeedsReview(location.state)
 
   const needsReviewIds = new Set(needsReview.map((item) => item.entryId))
   const [entries, setEntries] = useState<Entry[]>([])

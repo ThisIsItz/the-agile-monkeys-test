@@ -29,6 +29,7 @@ import { ArrowLeft, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { entriesPath } from '@/features/routes/paths'
+import { needsReviewFromPreview } from '@/features/entries/needsReview'
 import { SchemaChangePreviewModal } from './SchemaChangePreviewModal'
 
 const getSchemaInitialValues = (schema?: Schema): SchemaInput => ({
@@ -84,18 +85,7 @@ export const SchemaEditor = ({
     disabled: type === 'reference' && !hasReferenceTargets
   }))
 
-  const needsReview = (preview?.changes ?? [])
-    .filter(
-      (change) =>
-        change.changeType !== 'deleted' && change.affectedEntries.length > 0
-    )
-    .flatMap((change) =>
-      change.affectedEntries.map((entry) => ({
-        entryId: entry.id,
-        fieldId: 'fieldId' in change ? change.fieldId : undefined,
-        fieldName: change.fieldName
-      }))
-    )
+  const needsReview = needsReviewFromPreview(preview)
 
   const handleFormSubmit = async (values: SchemaInput) => {
     setError(null)

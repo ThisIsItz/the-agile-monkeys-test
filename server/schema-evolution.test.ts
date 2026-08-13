@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from './db/db.js'
 import { createEntry } from '@server/entries/entries.repository.js'
 import { createSchema } from '@server/schemas/schemas.repository.js'
-import { diffSchemaFields, findAffectedEntries } from './schema-evolution.js'
+import {
+  diffSchemaFields,
+  findAffectedEntries,
+  previewSchemaDeletion
+} from './schema-evolution.js'
 import type { Field, FieldInput, Schema } from '@shared/types.js'
 
 function makeField(overrides: Partial<Field> = {}): Field {
@@ -405,6 +409,67 @@ describe('findAffectedEntries', () => {
     ])
     expect(impactFor(impacts, 'made_required').affectedEntryIds).toEqual([
       entryWithB.id
+    ])
+  })
+})
+
+describe('previewSchemaDeletion', () => {
+  beforeEach(() => {
+    db.exec('DELETE FROM entries; DELETE FROM fields; DELETE FROM schemas;')
+  })
+
+  it('reports all of the schema entries as affected when nothing blocks deletion', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'title', type: 'text', required: false }]
+    })
+    const [titleField] = schema.fields
+    const entryA = createEntry(schema.id, {
+      data: { [titleField.id]: 'Dune' }
+    })
+    const entryB = createEntry(schema.id, { data: {} })
+
+    const impact = previewSchemaDeletion(schema.id)
+
+    expect(impact.affectedEntryIds.sort()).toEqual(
+      [entryA.id, entryB.id].sort()
+    )
+    expect(impact.blockingReferences).toEqual([])
+  })
+
+  it('reports no affected entries or blocking references for a schema with none', () => {
+    const schema = createSchema({ name: 'Empty', fields: [] })
+
+    const impact = previewSchemaDeletion(schema.id)
+
+    expect(impact.affectedEntryIds).toEqual([])
+    expect(impact.blockingReferences).toEqual([])
+  })
+
+  it('reports a blocking reference when another schema still points at it', () => {
+    const target = createSchema({ name: 'Author', fields: [] })
+    const referencing = createSchema({
+      name: 'Book',
+      fields: [
+        {
+          name: 'author',
+          type: 'reference',
+          required: false,
+          referenceTargetSchemaId: target.id
+        }
+      ]
+    })
+    const [authorField] = referencing.fields
+
+    const impact = previewSchemaDeletion(target.id)
+
+    expect(impact.blockingReferences).toEqual([
+      {
+        schemaId: referencing.id,
+        schemaName: 'Book',
+        fieldId: authorField.id,
+        fieldName: 'author'
+      }
     ])
   })
 })

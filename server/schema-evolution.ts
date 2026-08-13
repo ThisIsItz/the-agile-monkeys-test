@@ -2,13 +2,18 @@ import {
   getEntryById,
   listEntries
 } from '@server/entries/entries.repository.js'
+import { listSchemas } from '@server/schemas/schemas.repository.js'
 import type {
   EntryFieldValue,
   FieldInput,
   Schema,
   SchemaInput
 } from '@shared/types.js'
-import type { FieldChange, FieldChangeImpact } from '@shared/types.js'
+import type {
+  FieldChange,
+  FieldChangeImpact,
+  SchemaDeletionImpact
+} from '@shared/types.js'
 import { fieldValueSchema } from './validation.js'
 
 export function diffSchemaFields(
@@ -164,4 +169,25 @@ export function findAffectedEntries(
         }
     }
   })
+}
+
+export function previewSchemaDeletion(schemaId: string): SchemaDeletionImpact {
+  const entries = listEntries(schemaId)
+
+  const blockingReferences = listSchemas().flatMap((schema) =>
+    schema.fields
+      .filter((field) => field.referenceTargetSchemaId === schemaId)
+      .map((field) => ({
+        schemaId: schema.id,
+        schemaName: schema.name,
+        fieldId: field.id,
+        fieldName: field.name
+      }))
+  )
+
+  return {
+    schemaId,
+    affectedEntryIds: entries.map((entry) => entry.id),
+    blockingReferences
+  }
 }

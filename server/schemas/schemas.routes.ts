@@ -5,7 +5,8 @@ import { schemaInputSchema } from '@server/validation.js'
 import { emitSchemasChanged } from '@server/realtime/realtime.js'
 import {
   diffSchemaFields,
-  findAffectedEntries
+  findAffectedEntries,
+  previewSchemaDeletion
 } from '@server/schema-evolution.js'
 
 export const schemasRouter = Router()
@@ -36,6 +37,13 @@ schemasRouter.post('/:id/preview', (req, res) => {
   const impacts = findAffectedEntries(existing.id, changes, input)
 
   res.json({ changes: impacts })
+})
+
+schemasRouter.get('/:id/delete-preview', (req, res) => {
+  const existing = repo.getSchemaById(req.params.id)
+  if (!existing) throw new HttpError(404, 'Schema not found')
+
+  res.json(previewSchemaDeletion(existing.id))
 })
 
 schemasRouter.put('/:id', (req, res) => {

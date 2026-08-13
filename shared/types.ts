@@ -84,3 +84,16 @@ export type FieldChangeImpact = FieldChange & { affectedEntryIds: string[] }
 export type SchemaPreviewResponse = {
   changes: FieldChangeImpact[]
 }
+
+export interface BlockingReference {
+  schemaId: string
+  schemaName: string
+  fieldId: string
+  fieldName: string
+}
+
+export interface SchemaDeletionImpact {
+  schemaId: string
+  affectedEntryIds: string[]
+  blockingReferences: BlockingReference[]
+}

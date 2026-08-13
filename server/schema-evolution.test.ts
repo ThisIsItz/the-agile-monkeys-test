@@ -285,6 +285,42 @@ describe('findAffectedEntries', () => {
     expect(impactFor(impacts, 'retyped').affectedEntryIds).toEqual([entry.id])
   })
 
+  it('when retyped to reference, only affects entries whose value does not point at a real entry in the new target', () => {
+    const target = createSchema({ name: 'Author', fields: [] })
+    const realAuthor = createEntry(target.id, { data: {} })
+
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'author', type: 'text', required: false }]
+    })
+    const [authorField] = schema.fields
+    const validReference = createEntry(schema.id, {
+      data: { [authorField.id]: realAuthor.id }
+    })
+    const danglingReference = createEntry(schema.id, {
+      data: { [authorField.id]: 'not-a-real-entry-id' }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [
+        toInput(authorField, {
+          type: 'reference',
+          referenceTargetSchemaId: target.id
+        })
+      ]
+    }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema.id, changes, input)
+
+    expect(impactFor(impacts, 'retyped').affectedEntryIds).toEqual([
+      danglingReference.id
+    ])
+    expect(impactFor(impacts, 'retyped').affectedEntryIds).not.toContain(
+      validReference.id
+    )
+  })
+
   it('affects entries missing a value for a field made required, not entries with one', () => {
     const schema = createSchema({
       name: 'Book',

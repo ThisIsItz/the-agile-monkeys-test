@@ -5,7 +5,6 @@ import {
 import type {
   EntryFieldValue,
   FieldInput,
-  FieldType,
   Schema,
   SchemaInput
 } from '@shared/types.js'
@@ -84,12 +83,20 @@ function hasValue(
   return value !== null && value !== undefined
 }
 
-function isValueValidForShape(
-  shape: { type: FieldType; required: boolean },
+function isValueValidForField(
+  field: Pick<FieldInput, 'type' | 'required' | 'referenceTargetSchemaId'>,
   value: EntryFieldValue | undefined
 ): boolean {
-  if (!hasValue(value)) return !shape.required
-  return fieldValueSchema(shape).safeParse(value).success
+  if (!hasValue(value)) return !field.required
+
+  if (field.type === 'reference') {
+    if (typeof value !== 'string' || !field.referenceTargetSchemaId) {
+      return false
+    }
+    return getEntryById(field.referenceTargetSchemaId, value) !== undefined
+  }
+
+  return fieldValueSchema(field).safeParse(value).success
 }
 
 export function findAffectedEntries(
@@ -99,9 +106,9 @@ export function findAffectedEntries(
 ): FieldChangeImpact[] {
   const entries = listEntries(schemaId)
 
-  const incomingRequiredById = new Map<string, boolean>()
+  const incomingById = new Map<string, FieldInput>()
   for (const field of input.fields) {
-    if (field.id) incomingRequiredById.set(field.id, field.required)
+    if (field.id) incomingById.set(field.id, field)
   }
 
   return changes.map((change) => {
@@ -118,16 +125,18 @@ export function findAffectedEntries(
         }
 
       case 'retyped': {
-        const required = incomingRequiredById.get(change.fieldId) ?? false
+        const incoming = incomingById.get(change.fieldId)
+        const newField = {
+          type: change.after,
+          required: incoming?.required ?? false,
+          referenceTargetSchemaId: incoming?.referenceTargetSchemaId ?? null
+        }
         return {
           ...change,
           affectedEntryIds: entries
             .filter(
               (entry) =>
-                !isValueValidForShape(
-                  { type: change.after, required },
-                  entry.data[change.fieldId]
-                )
+                !isValueValidForField(newField, entry.data[change.fieldId])
             )
             .map((entry) => entry.id)
         }

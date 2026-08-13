@@ -1,19 +1,11 @@
 import { createEntry, getEntries, updateEntry } from '@/api/entries'
 import { getSchema } from '@/api/schemas'
-import {
-  Alert,
-  Button,
-  Checkbox,
-  NumberInput,
-  Select,
-  Stack,
-  TextInput,
-  Title
-} from '@mantine/core'
+import { Alert, Button, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import type { Entry, EntryInput, Field, Schema } from '@shared/types'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { EntryFieldInput } from './EntryFieldInput'
 
 export const EntryEditor = ({
   entry,
@@ -115,64 +107,6 @@ export const EntryEditor = ({
     }
   }
 
-  const renderField = (field: Schema['fields'][number]) => {
-    const path = `data.${field.id}`
-
-    switch (field.type) {
-      case 'text':
-        return (
-          <TextInput
-            key={field.id}
-            label={field.name}
-            required={field.required}
-            {...entryForm.getInputProps(path)}
-          />
-        )
-
-      case 'number':
-        return (
-          <NumberInput
-            key={field.id}
-            label={field.name}
-            required={field.required}
-            {...entryForm.getInputProps(path)}
-          />
-        )
-
-      case 'boolean':
-        return (
-          <Checkbox
-            key={field.id}
-            label={field.name}
-            {...entryForm.getInputProps(path, { type: 'checkbox' })}
-          />
-        )
-
-      case 'date':
-        return (
-          <TextInput
-            key={field.id}
-            type="date"
-            label={field.name}
-            required={field.required}
-            {...entryForm.getInputProps(path)}
-          />
-        )
-
-      case 'reference':
-        return (
-          <Select
-            key={field.id}
-            label={field.name}
-            placeholder="Select entry"
-            required={field.required}
-            data={referenceOptions[field.id] ?? []}
-            {...entryForm.getInputProps(path)}
-          />
-        )
-    }
-  }
-
   return (
     <div>
       <Button
@@ -191,7 +125,14 @@ export const EntryEditor = ({
       )}
       <form onSubmit={entryForm.onSubmit(handleFormSubmit)}>
         <Stack mt="md">
-          {schema.fields.map(renderField)}
+          {schema.fields.map((field) => (
+            <EntryFieldInput
+              key={field.id}
+              field={field}
+              form={entryForm}
+              referenceOptions={referenceOptions[field.id] ?? []}
+            />
+          ))}
           <Button type="submit" loading={entryForm.submitting}>
             {entry ? 'Save changes' : 'Create entry'}
           </Button>

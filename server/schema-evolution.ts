@@ -147,13 +147,23 @@ export function findAffectedEntries(
         }
       }
 
-      case 'made_required':
+      case 'made_required': {
+        const incoming = incomingById.get(change.fieldId)
+        const newField = {
+          type: incoming?.type ?? 'text',
+          required: true,
+          referenceTargetSchemaId: incoming?.referenceTargetSchemaId ?? null
+        }
         return {
           ...change,
           affectedEntryIds: entries
-            .filter((entry) => !hasValue(entry.data[change.fieldId]))
+            .filter(
+              (entry) =>
+                !isValueValidForField(newField, entry.data[change.fieldId])
+            )
             .map((entry) => entry.id)
         }
+      }
 
       case 'reference_target_changed':
         return {

@@ -346,6 +346,28 @@ describe('findAffectedEntries', () => {
     ])
   })
 
+  it('affects entries with an empty string for a text field made required, matching normal validation', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'subtitle', type: 'text', required: false }]
+    })
+    const [subtitleField] = schema.fields
+    const emptyString = createEntry(schema.id, {
+      data: { [subtitleField.id]: '' }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(subtitleField, { required: true })]
+    }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema.id, changes, input)
+
+    expect(impactFor(impacts, 'made_required').affectedEntryIds).toEqual([
+      emptyString.id
+    ])
+  })
+
   it('affects entries whose reference no longer exists in the new target schema', () => {
     const oldTarget = createSchema({ name: 'Author', fields: [] })
     const oldTargetEntry = createEntry(oldTarget.id, { data: {} })

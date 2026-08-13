@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { db } from './db.js'
-import { HttpError } from './http-error.js'
+
 import type {
   FieldInput,
   Field,
@@ -8,6 +7,8 @@ import type {
   SchemaInput,
   Schema
 } from '@shared/types.js'
+import { db } from '@server/db/db.js'
+import { HttpError } from '@server/http-error.js'
 
 interface SchemaRow {
   id: string

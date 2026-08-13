@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { db } from './db.js'
-import { createApp } from './app.js'
-import * as realtime from './realtime.js'
+import { db } from '../db/db.js'
+import { createApp } from '../app.js'
+import * as realtime from '../realtime/realtime.js'
 import type { Entry, Schema } from '@shared/types.js'
 
 vi.mock('./realtime.js', () => ({

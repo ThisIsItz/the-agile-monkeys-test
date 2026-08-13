@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { db } from './db.js'
-import { createApp } from './app.js'
+import { db } from '@server/db/db.js'
+import { createApp } from '@server/app.js'
 
 async function startServer() {
   const server = createApp().listen(0)
@@ -91,7 +91,9 @@ describe('content.routes', () => {
 
       const found = await fetch(`${baseUrl}/api/content/Car/${entry.id}`)
       expect(found.status).toBe(200)
-      const foundBody = (await found.json()) as { data: Record<string, unknown> }
+      const foundBody = (await found.json()) as {
+        data: Record<string, unknown>
+      }
       expect(foundBody.data.brand).toBe('Tesla')
 
       const missing = await fetch(`${baseUrl}/api/content/Car/missing-id`)

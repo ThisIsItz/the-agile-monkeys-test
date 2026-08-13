@@ -1,9 +1,14 @@
 import { randomUUID } from 'node:crypto'
-import { db } from './db.js'
-import { HttpError } from './http-error.js'
-import { getSchemaById } from './schemas.repository.js'
-import { buildEntryDataSchema } from './validation.js'
-import type { Entry, EntryFieldValue, EntryInput, Schema } from '@shared/types.js'
+import { db } from '../db/db.js'
+import { HttpError } from '../http-error.js'
+import { buildEntryDataSchema } from '../validation.js'
+import type {
+  Entry,
+  EntryFieldValue,
+  EntryInput,
+  Schema
+} from '@shared/types.js'
+import { getSchemaById } from '@server/schemas/schemas.repository.js'
 
 interface EntryRow {
   id: string
@@ -55,7 +60,9 @@ function assertReferenceEntriesExist(
 export function listEntries(schemaId: string): Entry[] {
   getSchemaOrThrow(schemaId)
   const rows = db
-    .prepare('SELECT * FROM entries WHERE schema_id = ? ORDER BY created_at ASC')
+    .prepare(
+      'SELECT * FROM entries WHERE schema_id = ? ORDER BY created_at ASC'
+    )
     .all(schemaId) as EntryRow[]
   return rows.map(mapEntry)
 }

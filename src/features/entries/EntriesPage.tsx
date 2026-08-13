@@ -26,6 +26,8 @@ import {
   entryEditPath,
   newEntryPath
 } from '@/features/routes/paths'
+import { getReferenceLabels } from './referenceLabels'
+import { getEntryLabel } from './entryUtils'
 
 export const EntriesPage = () => {
   const navigate = useNavigate()
@@ -37,6 +39,57 @@ export const EntriesPage = () => {
   >({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+
+  const refreshEntries = async () => {
+    if (!schemaId) return
+    try {
+      const data = await getEntries(schemaId)
+      setEntries(data)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'))
+    }
+  }
+
+  useRealtimeEvent<{ schemaId: string; entryId: string }>(
+    'entries:changed',
+    (payload) => {
+      if (payload.schemaId === schemaId) refreshEntries()
+    }
+  )
+
+  const handleDeleteEntry = async (entryToDelete: Entry) => {
+    if (!schemaId) return
+
+    try {
+      await deleteEntry(schemaId, entryToDelete.id)
+      const data = await getEntries(schemaId)
+      setEntries(data)
+      notifications.show({ message: 'Entry deleted', color: 'green' })
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'))
+    }
+  }
+
+  const openDeleteModal = (entryToDelete: Entry, currentSchema: Schema) =>
+    confirmDelete({
+      title: 'Delete entry',
+      message: `Are you sure you want to delete "${getEntryLabel(entryToDelete, currentSchema)}" entry? This action cannot be undone.`,
+      onConfirm: () => handleDeleteEntry(entryToDelete)
+    })
+
+  useEffect(() => {
+    if (!schema) return
+
+    const loadReferenceLabels = async () => {
+      try {
+        setReferenceLabels(await getReferenceLabels(schema.fields))
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Unknown error'))
+      }
+    }
+
+    loadReferenceLabels()
+  }, [schema])
 
   useEffect(() => {
     const loadEntries = async () => {
@@ -58,102 +111,6 @@ export const EntriesPage = () => {
 
     loadEntries()
   }, [schemaId])
-
-  const refreshEntries = async () => {
-    if (!schemaId) return
-    try {
-      const data = await getEntries(schemaId)
-      setEntries(data)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'))
-    }
-  }
-
-  useRealtimeEvent<{ schemaId: string; entryId: string }>(
-    'entries:changed',
-    (payload) => {
-      if (payload.schemaId === schemaId) refreshEntries()
-    }
-  )
-
-  useEffect(() => {
-    if (!schema) return
-
-    const targetSchemaIds = [
-      ...new Set(
-        schema.fields
-          .filter((field) => field.type === 'reference')
-          .map((field) => field.referenceTargetSchemaId)
-          .filter((id): id is string => Boolean(id))
-      )
-    ]
-    if (targetSchemaIds.length === 0) return
-
-    const loadReferenceLabels = async () => {
-      try {
-        const labels: Record<string, string> = {}
-
-        await Promise.all(
-          targetSchemaIds.map(async (targetSchemaId) => {
-            const [targetSchema, targetEntries] = await Promise.all([
-              getSchema(targetSchemaId),
-              getEntries(targetSchemaId)
-            ])
-            const titleField = targetSchema.fields[0]
-            for (const targetEntry of targetEntries) {
-              const value = titleField
-                ? targetEntry.data[titleField.id]
-                : undefined
-              labels[targetEntry.id] =
-                value === null || value === undefined || value === ''
-                  ? targetEntry.id
-                  : String(value)
-            }
-          })
-        )
-
-        setReferenceLabels(labels)
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'))
-      }
-    }
-
-    loadReferenceLabels()
-  }, [schema])
-
-  const handleDeleteEntry = async (entryToDelete: Entry) => {
-    if (!schemaId) return
-
-    try {
-      await deleteEntry(schemaId, entryToDelete.id)
-      const data = await getEntries(schemaId)
-      setEntries(data)
-      notifications.show({ message: 'Entry deleted', color: 'green' })
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'))
-    }
-  }
-
-  const entryLabel = (entryToLabel: Entry) => {
-    const textField = schema?.fields.find((field) => {
-      if (field.type !== 'text') return false
-      const value = entryToLabel.data[field.id]
-      return typeof value === 'string' && value !== ''
-    })
-
-    if (textField) {
-      return String(entryToLabel.data[textField.id])
-    }
-
-    return `${entryToLabel.id.slice(0, 8)}…`
-  }
-
-  const openDeleteModal = (entryToDelete: Entry) =>
-    confirmDelete({
-      title: 'Delete entry',
-      message: `Are you sure you want to delete "${entryLabel(entryToDelete)}" entry? This action cannot be undone.`,
-      onConfirm: () => handleDeleteEntry(entryToDelete)
-    })
 
   if (loading) return <Loader />
   if (error instanceof ApiError && error.status === 404) {
@@ -213,7 +170,7 @@ export const EntriesPage = () => {
                 <EntityActions
                   mt="md"
                   onEdit={() => navigate(entryEditPath(schema.id, entry.id))}
-                  onDelete={() => openDeleteModal(entry)}
+                  onDelete={() => openDeleteModal(entry, schema)}
                 />
               </Stack>
             </Card>

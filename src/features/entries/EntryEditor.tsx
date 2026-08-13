@@ -7,6 +7,15 @@ import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EntryFieldInput } from './EntryFieldInput'
 
+const getEntryInitialValues = (schema: Schema, entry?: Entry): EntryInput => ({
+  data: Object.fromEntries(
+    schema.fields.map((field: Field) => [
+      field.id,
+      entry?.data[field.id] ?? (field.type === 'boolean' ? false : '')
+    ])
+  )
+})
+
 export const EntryEditor = ({
   entry,
   schema,
@@ -21,14 +30,7 @@ export const EntryEditor = ({
     Record<string, { value: string; label: string }[]>
   >({})
   const entryForm = useForm<EntryInput>({
-    initialValues: {
-      data: Object.fromEntries(
-        schema.fields.map((field: Field) => [
-          field.id,
-          entry?.data[field.id] ?? (field.type === 'boolean' ? false : '')
-        ])
-      )
-    }
+    initialValues: getEntryInitialValues(schema, entry)
   })
 
   useEffect(() => {

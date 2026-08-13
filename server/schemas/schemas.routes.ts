@@ -1,8 +1,8 @@
 import { Router } from 'express'
 import * as repo from './schemas.repository.js'
-import { schemaInputSchema } from './validation.js'
-import { HttpError } from './http-error.js'
-import { emitSchemasChanged } from './realtime.js'
+import { HttpError } from '@server/http-error.js'
+import { schemaInputSchema } from '@server/validation.js'
+import { emitSchemasChanged } from '@server/realtime/realtime.js'
 
 export const schemasRouter = Router()
 

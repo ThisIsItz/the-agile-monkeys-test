@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { db } from './db.js'
-import { createSchema } from './schemas.repository.js'
+import { db } from '../db/db.js'
+
+import { HttpError } from '../http-error.js'
+import { createSchema } from '@server/schemas/schemas.repository.js'
 import { createEntry, getEntryById } from './entries.repository.js'
-import { HttpError } from './http-error.js'
 
 describe('entries.repository', () => {
   beforeEach(() => {

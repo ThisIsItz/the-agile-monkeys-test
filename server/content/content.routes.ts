@@ -1,8 +1,12 @@
 import { Router } from 'express'
-import { getSchemaByName } from './schemas.repository.js'
-import { getEntryById, listEntries } from './entries.repository.js'
-import { HttpError } from './http-error.js'
+
 import type { Entry, EntryFieldValue, Schema } from '@shared/types.js'
+import { getSchemaByName } from '@server/schemas/schemas.repository.js'
+import { HttpError } from '@server/http-error.js'
+import {
+  getEntryById,
+  listEntries
+} from '@server/entries/entries.repository.js'
 
 export const contentRouter = Router()
 

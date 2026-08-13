@@ -1,9 +1,9 @@
 import cors from 'cors'
 import express from 'express'
 import { errorHandler } from './error-handler.js'
-import { schemasRouter } from './schemas.routes.js'
-import { entriesRouter } from './entries.routes.js'
-import { contentRouter } from './content.routes.js'
+import { entriesRouter } from './entries/entries.routes.js'
+import { schemasRouter } from './schemas/schemas.routes.js'
+import { contentRouter } from './content/content.routes.js'
 
 export function createApp() {
   const app = express()

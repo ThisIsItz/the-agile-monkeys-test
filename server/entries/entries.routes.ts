@@ -1,9 +1,10 @@
 import { Router } from 'express'
 import type { Request } from 'express'
 import * as repo from './entries.repository.js'
-import { entryInputSchema } from './validation.js'
-import { HttpError } from './http-error.js'
-import { emitEntriesChanged } from './realtime.js'
+
+import { HttpError } from '@server/http-error.js'
+import { entryInputSchema } from '@server/validation.js'
+import { emitEntriesChanged } from '@server/realtime/realtime.js'
 
 export const entriesRouter = Router({ mergeParams: true })
 

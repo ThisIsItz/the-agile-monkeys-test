@@ -3,6 +3,10 @@ import * as repo from './schemas.repository.js'
 import { HttpError } from '@server/http-error.js'
 import { schemaInputSchema } from '@server/validation.js'
 import { emitSchemasChanged } from '@server/realtime/realtime.js'
+import {
+  diffSchemaFields,
+  findAffectedEntries
+} from '@server/schema-evolution.js'
 
 export const schemasRouter = Router()
 
@@ -21,6 +25,17 @@ schemasRouter.post('/', (req, res) => {
   const schema = repo.createSchema(input)
   emitSchemasChanged(schema.id)
   res.status(201).json(schema)
+})
+
+schemasRouter.post('/:id/preview', (req, res) => {
+  const input = schemaInputSchema.parse(req.body)
+  const existing = repo.getSchemaById(req.params.id)
+  if (!existing) throw new HttpError(404, 'Schema not found')
+
+  const changes = diffSchemaFields(existing, input)
+  const impacts = findAffectedEntries(existing.id, changes, input)
+
+  res.json({ changes: impacts })
 })
 
 schemasRouter.put('/:id', (req, res) => {

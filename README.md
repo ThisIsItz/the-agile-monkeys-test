@@ -46,10 +46,13 @@ Install dependencies:
 npm install
 ```
 
-The app is split into a Vite frontend and an Express API, so start each in its own terminal:
+The app is split into a Vite frontend and an Express API, so you need **two terminals running at the same time**—the frontend alone cannot reach `/api` or `/socket.io`:
 
 ```bash
+# terminal 1
 npm run dev         # frontend, with /api and /socket.io proxied to the API
+
+# terminal 2
 npm run dev:server  # API + Socket.IO server on port 3001
 ```
 

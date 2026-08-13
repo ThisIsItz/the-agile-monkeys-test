@@ -39,11 +39,16 @@ describe('EntryEditor', () => {
       createdAt: '',
       updatedAt: ''
     })
-    const handleBack = vi.fn()
+    const handleSaved = vi.fn()
     const user = userEvent.setup()
 
     renderWithProviders(
-      <EntryEditor schema={carSchemaTextOnly} handleBack={handleBack} />
+      <EntryEditor
+        schema={carSchemaTextOnly}
+        handleBack={vi.fn()}
+        handleSaved={handleSaved}
+        reviewFields={[]}
+      />
     )
 
     await user.type(screen.getByLabelText(/^brand/), 'Tesla')
@@ -54,7 +59,7 @@ describe('EntryEditor', () => {
         data: { 'c-brand': 'Tesla' }
       })
     )
-    await waitFor(() => expect(handleBack).toHaveBeenCalled())
+    await waitFor(() => expect(handleSaved).toHaveBeenCalled())
   })
 
   it('pre-fills form values from entry.data keyed by field id when editing', async () => {
@@ -71,6 +76,8 @@ describe('EntryEditor', () => {
         schema={carSchemaTextOnly}
         entry={existingEntry}
         handleBack={vi.fn()}
+        handleSaved={vi.fn()}
+        reviewFields={[]}
       />
     )
 
@@ -129,7 +136,12 @@ describe('EntryEditor', () => {
 
     const user = userEvent.setup()
     renderWithProviders(
-      <EntryEditor schema={carSchemaWithReference} handleBack={vi.fn()} />
+      <EntryEditor
+        schema={carSchemaWithReference}
+        handleBack={vi.fn()}
+        handleSaved={vi.fn()}
+        reviewFields={[]}
+      />
     )
 
     const referenceSelect = await screen.findByRole('combobox', {
@@ -138,5 +150,58 @@ describe('EntryEditor', () => {
     await user.click(referenceSelect)
 
     expect(await screen.findByText('Alice')).toBeTruthy()
+  })
+
+  it('normalizes a cleared optional number field to null instead of ""', async () => {
+    const carSchemaWithYear: Schema = {
+      id: 'car-1',
+      name: 'Car',
+      fields: [
+        {
+          id: 'c-year',
+          schemaId: 'car-1',
+          name: 'year',
+          type: 'number',
+          required: false,
+          referenceTargetSchemaId: null,
+          position: 0,
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdAt: '',
+      updatedAt: ''
+    }
+    const existingEntry: Entry = {
+      id: 'car-entry-1',
+      schemaId: 'car-1',
+      data: { 'c-year': 1993 },
+      createdAt: '',
+      updatedAt: ''
+    }
+    vi.mocked(entriesApi.updateEntry).mockResolvedValue(existingEntry)
+    const user = userEvent.setup()
+
+    renderWithProviders(
+      <EntryEditor
+        schema={carSchemaWithYear}
+        entry={existingEntry}
+        handleBack={vi.fn()}
+        handleSaved={vi.fn()}
+        reviewFields={[]}
+      />
+    )
+
+    const yearInput = await screen.findByDisplayValue('1993')
+    await user.clear(yearInput)
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() =>
+      expect(entriesApi.updateEntry).toHaveBeenCalledWith(
+        'car-1',
+        'car-entry-1',
+        { data: { 'c-year': null } }
+      )
+    )
   })
 })

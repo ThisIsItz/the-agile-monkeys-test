@@ -83,6 +83,64 @@ describe('schemas.routes', () => {
     })
   })
 
+  describe('PUT /:id', () => {
+    it('migrates safely convertible entry data when applying a retyped field', async () => {
+      const { server, baseUrl } = await startServer()
+
+      try {
+        const schemaRes = await fetch(`${baseUrl}/api/schemas`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Book',
+            fields: [{ name: 'pages', type: 'text', required: false }]
+          })
+        })
+        const schema = (await schemaRes.json()) as Schema
+        const [pagesField] = schema.fields
+
+        const entryRes = await fetch(
+          `${baseUrl}/api/schemas/${schema.id}/entries`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: { [pagesField.id]: '1993' } })
+          }
+        )
+        const entry = (await entryRes.json()) as Entry
+
+        const putRes = await fetch(`${baseUrl}/api/schemas/${schema.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Book',
+            fields: [
+              {
+                id: pagesField.id,
+                name: 'pages',
+                type: 'number',
+                required: false
+              }
+            ]
+          })
+        })
+        const updatedSchema = (await putRes.json()) as Schema
+
+        expect(putRes.status).toBe(200)
+        expect(updatedSchema.fields[0].type).toBe('number')
+
+        const entryAfterRes = await fetch(
+          `${baseUrl}/api/schemas/${schema.id}/entries/${entry.id}`
+        )
+        const entryAfter = (await entryAfterRes.json()) as Entry
+
+        expect(entryAfter.data[pagesField.id]).toBe(1993)
+      } finally {
+        server.close()
+      }
+    })
+  })
+
   describe('GET /:id/delete-preview', () => {
     it('returns the affected entries for a deletable schema', async () => {
       const { server, baseUrl } = await startServer()

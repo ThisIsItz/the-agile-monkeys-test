@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
-import { Route, Routes } from 'react-router-dom'
+import userEvent from '@testing-library/user-event'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import type { Schema } from '@shared/types'
 import { renderWithProviders } from '@/test/render'
 import { EntryEditorPage } from './EntryEditorPage'
@@ -130,5 +131,108 @@ describe('EntryEditorPage', () => {
     entriesListener?.({ schemaId: 'car-1', entryId: 'anything' })
 
     expect(screen.queryByText('This entry was changed')).toBeNull()
+  })
+
+  it('shows the needs-review warning on a field flagged in the needsReview state', async () => {
+    vi.mocked(schemasApi.getSchema).mockResolvedValue(carSchema)
+    vi.mocked(entriesApi.getEntry).mockResolvedValue({
+      id: 'car-entry-1',
+      schemaId: 'car-1',
+      data: { 'c-brand': 'Tesla' },
+      createdAt: '',
+      updatedAt: ''
+    })
+    vi.mocked(entriesApi.getEntries).mockResolvedValue([])
+
+    renderWithProviders(
+      <Routes>
+        <Route
+          path="/schemas/:schemaId/entries/:entryId/edit"
+          element={<EntryEditorPage />}
+        />
+      </Routes>,
+      {
+        route: '/schemas/car-1/entries/car-entry-1/edit',
+        state: {
+          needsReview: [
+            { entryId: 'car-entry-1', fieldId: 'c-brand', fieldName: 'brand' }
+          ]
+        }
+      }
+    )
+
+    await screen.findByDisplayValue('Tesla')
+
+    expect(screen.getByText('Needs review after schema change')).toBeTruthy()
+  })
+
+  it('removes the saved entry from needsReview state when navigating back after a successful save', async () => {
+    vi.mocked(schemasApi.getSchema).mockResolvedValue(carSchema)
+    vi.mocked(entriesApi.getEntry).mockResolvedValue({
+      id: 'car-entry-1',
+      schemaId: 'car-1',
+      data: { 'c-brand': 'Tesla' },
+      createdAt: '',
+      updatedAt: ''
+    })
+    vi.mocked(entriesApi.getEntries).mockResolvedValue([])
+    vi.mocked(entriesApi.updateEntry).mockResolvedValue({
+      id: 'car-entry-1',
+      schemaId: 'car-1',
+      data: { 'c-brand': 'Tesla' },
+      createdAt: '',
+      updatedAt: ''
+    })
+    const user = userEvent.setup()
+
+    const EntriesPlaceholder = () => {
+      const location = useLocation()
+      return (
+        <div>
+          Entries page
+          <pre>{JSON.stringify(location.state)}</pre>
+        </div>
+      )
+    }
+
+    renderWithProviders(
+      <Routes>
+        <Route
+          path="/schemas/:schemaId/entries/:entryId/edit"
+          element={<EntryEditorPage />}
+        />
+        <Route
+          path="/schemas/:schemaId/entries"
+          element={<EntriesPlaceholder />}
+        />
+      </Routes>,
+      {
+        route: '/schemas/car-1/entries/car-entry-1/edit',
+        state: {
+          needsReview: [
+            {
+              entryId: 'car-entry-1',
+              fieldId: 'c-brand',
+              fieldName: 'brand'
+            },
+            { entryId: 'other-entry', fieldId: 'x', fieldName: 'other' }
+          ]
+        }
+      }
+    )
+
+    await screen.findByDisplayValue('Tesla')
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByText('Entries page')).toBeTruthy()
+    expect(
+      screen.getByText(
+        JSON.stringify({
+          needsReview: [
+            { entryId: 'other-entry', fieldId: 'x', fieldName: 'other' }
+          ]
+        })
+      )
+    ).toBeTruthy()
   })
 })

@@ -1,13 +1,17 @@
+import {
+  createEntry,
+  getEntryById
+} from '@server/entries/entries.repository.js'
+import { createSchema } from '@server/schemas/schemas.repository.js'
+import type { Field, FieldInput, Schema } from '@shared/types.js'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from './db/db.js'
-import { createEntry } from '@server/entries/entries.repository.js'
-import { createSchema } from '@server/schemas/schemas.repository.js'
 import {
   diffSchemaFields,
   findAffectedEntries,
+  migrateSafeRetypedFields,
   previewSchemaDeletion
 } from './schema-evolution.js'
-import type { Field, FieldInput, Schema } from '@shared/types.js'
 
 function makeField(overrides: Partial<Field> = {}): Field {
   return {
@@ -34,7 +38,10 @@ function makeSchema(fields: Field[]): Schema {
   }
 }
 
-function toInput(field: Field, overrides: Partial<FieldInput> = {}): FieldInput {
+function toInput(
+  field: Field,
+  overrides: Partial<FieldInput> = {}
+): FieldInput {
   return {
     id: field.id,
     name: field.name,
@@ -50,7 +57,10 @@ describe('diffSchemaFields', () => {
     const field = makeField()
     const existing = makeSchema([field])
 
-    const changes = diffSchemaFields(existing, { name: 'Book', fields: [toInput(field)] })
+    const changes = diffSchemaFields(existing, {
+      name: 'Book',
+      fields: [toInput(field)]
+    })
 
     expect(changes).toEqual([])
   })
@@ -164,9 +174,7 @@ describe('diffSchemaFields', () => {
 
     const changes = diffSchemaFields(existing, {
       name: 'Book',
-      fields: [
-        toInput(field, { type: 'text', referenceTargetSchemaId: null })
-      ]
+      fields: [toInput(field, { type: 'text', referenceTargetSchemaId: null })]
     })
 
     expect(changes).toEqual([
@@ -291,6 +299,62 @@ describe('findAffectedEntries', () => {
     ])
   })
 
+  it('does not affect entries safely auto-migratable on retype (text<->number)', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [
+        { name: 'pages', type: 'text', required: false },
+        { name: 'year', type: 'number', required: false }
+      ]
+    })
+    const [pagesField, yearField] = schema.fields
+    createEntry(schema.id, {
+      data: {
+        [pagesField.id]: '1993',
+        [yearField.id]: 1993
+      }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [
+        toInput(pagesField, { type: 'number' }),
+        toInput(yearField, { type: 'text' })
+      ]
+    }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema, changes, input)
+
+    expect(
+      impacts.filter((impact) => impact.changeType === 'retyped')
+    ).toHaveLength(2)
+    for (const impact of impacts) {
+      expect(impact.affectedEntries).toEqual([])
+    }
+  })
+
+  it('affects a string of "Infinity" on text->number, since it is not a safe, usable number', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'pages', type: 'text', required: false }]
+    })
+    const [pagesField] = schema.fields
+    const entry = createEntry(schema.id, {
+      data: { [pagesField.id]: 'Infinity' }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(pagesField, { type: 'number' })]
+    }
+    const changes = diffSchemaFields(schema, input)
+    const impacts = findAffectedEntries(schema, changes, input)
+
+    expect(impactFor(impacts, 'retyped').affectedEntries).toEqual([
+      { id: entry.id, label: 'Infinity' }
+    ])
+  })
+
   it('when retyped to reference, only affects entries whose value does not point at a real entry in the new target', () => {
     const target = createSchema({ name: 'Author', fields: [] })
     const realAuthor = createEntry(target.id, { data: {} })
@@ -393,9 +457,7 @@ describe('findAffectedEntries', () => {
 
     const input = {
       name: 'Book',
-      fields: [
-        toInput(authorField, { referenceTargetSchemaId: newTarget.id })
-      ]
+      fields: [toInput(authorField, { referenceTargetSchemaId: newTarget.id })]
     }
     const changes = diffSchemaFields(schema, input)
     const impacts = findAffectedEntries(schema, changes, input)
@@ -432,6 +494,117 @@ describe('findAffectedEntries', () => {
     expect(impactFor(impacts, 'made_required').affectedEntries).toEqual([
       { id: entryWithB.id, label: `${entryWithB.id.slice(0, 8)}…` }
     ])
+  })
+})
+
+describe('migrateSafeRetypedFields', () => {
+  beforeEach(() => {
+    db.exec('DELETE FROM entries; DELETE FROM fields; DELETE FROM schemas;')
+  })
+
+  it('converts a numeric string to a number on text->number, leaving a non-numeric string untouched', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'pages', type: 'text', required: false }]
+    })
+    const [pagesField] = schema.fields
+    const numeric = createEntry(schema.id, {
+      data: { [pagesField.id]: '1993' }
+    })
+    const nonNumeric = createEntry(schema.id, {
+      data: { [pagesField.id]: 'vintage' }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(pagesField, { type: 'number' })]
+    }
+    const changes = diffSchemaFields(schema, input)
+    migrateSafeRetypedFields(schema, changes)
+
+    expect(getEntryById(schema.id, numeric.id)?.data[pagesField.id]).toBe(
+      1993
+    )
+    expect(getEntryById(schema.id, nonNumeric.id)?.data[pagesField.id]).toBe(
+      'vintage'
+    )
+  })
+
+  it('does not convert "Infinity" to a number, since it is not a safe, usable number', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'pages', type: 'text', required: false }]
+    })
+    const [pagesField] = schema.fields
+    const entry = createEntry(schema.id, {
+      data: { [pagesField.id]: 'Infinity' }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(pagesField, { type: 'number' })]
+    }
+    const changes = diffSchemaFields(schema, input)
+    migrateSafeRetypedFields(schema, changes)
+
+    expect(getEntryById(schema.id, entry.id)?.data[pagesField.id]).toBe(
+      'Infinity'
+    )
+  })
+
+  it('converts a number to text on number->text', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'year', type: 'number', required: false }]
+    })
+    const [yearField] = schema.fields
+    const entry = createEntry(schema.id, { data: { [yearField.id]: 1993 } })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(yearField, { type: 'text' })]
+    }
+    const changes = diffSchemaFields(schema, input)
+    migrateSafeRetypedFields(schema, changes)
+
+    expect(getEntryById(schema.id, entry.id)?.data[yearField.id]).toBe(
+      '1993'
+    )
+  })
+
+  it('leaves entries with a non-numeric string as the only ones still needing review after migration', () => {
+    const schema = createSchema({
+      name: 'Book',
+      fields: [{ name: 'pages', type: 'text', required: false }]
+    })
+    const [pagesField] = schema.fields
+    const numeric = createEntry(schema.id, {
+      data: { [pagesField.id]: '1993' }
+    })
+    const nonNumeric = createEntry(schema.id, {
+      data: { [pagesField.id]: 'vintage' }
+    })
+
+    const input = {
+      name: 'Book',
+      fields: [toInput(pagesField, { type: 'number' })]
+    }
+    const changes = diffSchemaFields(schema, input)
+
+    const impactsBeforeMigration = findAffectedEntries(schema, changes, input)
+    const needsReviewBefore = impactsBeforeMigration
+      .find((impact) => impact.changeType === 'retyped')!
+      .affectedEntries.map((entry) => entry.id)
+
+    migrateSafeRetypedFields(schema, changes)
+
+    expect(needsReviewBefore).toEqual([nonNumeric.id])
+    expect(getEntryById(schema.id, numeric.id)?.data[pagesField.id]).toBe(
+      1993
+    )
+    expect(getEntryById(schema.id, nonNumeric.id)?.data[pagesField.id]).toBe(
+      'vintage'
+    )
   })
 })
 

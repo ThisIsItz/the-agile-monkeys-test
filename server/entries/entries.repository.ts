@@ -118,6 +118,18 @@ export function updateEntry(
   return getEntryById(schemaId, id)!
 }
 
+export function overwriteEntryData(
+  id: string,
+  data: Record<string, EntryFieldValue>
+): void {
+  const now = new Date().toISOString()
+  db.prepare('UPDATE entries SET data = ?, updated_at = ? WHERE id = ?').run(
+    JSON.stringify(data),
+    now,
+    id
+  )
+}
+
 export function deleteEntry(schemaId: string, id: string): void {
   const existing = getEntryById(schemaId, id)
   if (!existing) throw new HttpError(404, 'Entry not found')

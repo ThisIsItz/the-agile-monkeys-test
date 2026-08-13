@@ -8,6 +8,7 @@ import { NotFoundPage } from '@/components/NotFoundPage'
 import { useRealtimeEvent } from '@/realtime/useRealtimeEvent'
 import {
   Anchor,
+  Badge,
   Button,
   Card,
   Center,
@@ -21,17 +22,22 @@ import { getEntryLabel } from '@shared/entryLabel'
 import type { Entry, Schema } from '@shared/types'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   SCHEMAS_ROUTE,
   entryEditPath,
   newEntryPath
 } from '@/features/routes/paths'
+import { getNeedsReview } from './needsReview'
 import { getReferenceLabels } from './referenceLabels'
 
 export const EntriesPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { schemaId } = useParams<{ schemaId: string }>()
+  const needsReview = getNeedsReview(location.state)
+
+  const needsReviewIds = new Set(needsReview.map((item) => item.entryId))
   const [entries, setEntries] = useState<Entry[]>([])
   const [schema, setSchema] = useState<Schema>()
   const [referenceLabels, setReferenceLabels] = useState<
@@ -139,6 +145,11 @@ export const EntriesPage = () => {
           {entries.map((entry) => (
             <Card key={entry.id} withBorder padding="lg" radius="md">
               <Stack gap="xs">
+                {needsReviewIds.has(entry.id) && (
+                  <Badge color="orange" variant="light" w="fit-content">
+                    Needs review
+                  </Badge>
+                )}
                 {schema.fields.map((field) => {
                   const value = entry.data[field.id]
                   const isEmpty = value === '' || value == null
@@ -169,7 +180,11 @@ export const EntriesPage = () => {
 
                 <EntityActions
                   mt="md"
-                  onEdit={() => navigate(entryEditPath(schema.id, entry.id))}
+                  onEdit={() =>
+                    navigate(entryEditPath(schema.id, entry.id), {
+                      state: { needsReview }
+                    })
+                  }
                   onDelete={() => openDeleteModal(entry, schema)}
                 />
               </Stack>

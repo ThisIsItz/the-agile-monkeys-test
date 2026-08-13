@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import type { Schema } from '@shared/types'
 import { renderWithProviders } from '@/test/render'
 import { SchemaEditor } from './SchemaEditor'
@@ -125,7 +126,7 @@ describe('SchemaEditor', () => {
           fieldId: 'f1',
           fieldName: 'subtitle',
           changeType: 'made_required',
-          affectedEntries: [{ id: 'entry-1', label: 'entry-1' }]
+          affectedEntries: []
         }
       ]
     })
@@ -159,5 +160,80 @@ describe('SchemaEditor', () => {
       })
     )
     await waitFor(() => expect(handleBack).toHaveBeenCalled())
+  })
+
+  it('navigates to the entries list with needsReview state when applying a change with affected entries', async () => {
+    const editedSchema: Schema = {
+      id: 'book-1',
+      name: 'Book',
+      fields: [
+        {
+          id: 'f1',
+          schemaId: 'book-1',
+          name: 'subtitle',
+          type: 'text',
+          required: false,
+          referenceTargetSchemaId: null,
+          position: 0,
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdAt: '',
+      updatedAt: ''
+    }
+    vi.mocked(schemasApi.getSchemas).mockResolvedValue([editedSchema])
+    vi.mocked(schemasApi.previewSchemaChange).mockResolvedValue({
+      changes: [
+        {
+          fieldId: 'f1',
+          fieldName: 'subtitle',
+          changeType: 'made_required',
+          affectedEntries: [{ id: 'entry-1', label: 'Some Entry' }]
+        }
+      ]
+    })
+    vi.mocked(schemasApi.updateSchema).mockResolvedValue(editedSchema)
+    const user = userEvent.setup()
+
+    const EntriesPlaceholder = () => {
+      const location = useLocation()
+      return (
+        <div>
+          Entries page
+          <pre>{JSON.stringify(location.state)}</pre>
+        </div>
+      )
+    }
+
+    renderWithProviders(
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <SchemaEditor schema={editedSchema} handleBack={vi.fn()} />
+          }
+        />
+        <Route
+          path="/schemas/:schemaId/entries"
+          element={<EntriesPlaceholder />}
+        />
+      </Routes>
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    await screen.findByText('Review schema changes')
+    await user.click(screen.getByRole('button', { name: 'Apply changes' }))
+
+    expect(await screen.findByText('Entries page')).toBeTruthy()
+    expect(
+      screen.getByText(
+        JSON.stringify({
+          needsReview: [
+            { entryId: 'entry-1', fieldId: 'f1', fieldName: 'subtitle' }
+          ]
+        })
+      )
+    ).toBeTruthy()
   })
 })

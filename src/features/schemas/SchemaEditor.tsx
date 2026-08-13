@@ -27,6 +27,9 @@ import {
 } from '@shared/types'
 import { ArrowLeft, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { entriesPath } from '@/features/routes/paths'
+import { needsReviewFromPreview } from '@/features/entries/needsReview'
 import { SchemaChangePreviewModal } from './SchemaChangePreviewModal'
 
 const getSchemaInitialValues = (schema?: Schema): SchemaInput => ({
@@ -55,6 +58,7 @@ export const SchemaEditor = ({
   schema?: Schema
   handleBack: () => void
 }) => {
+  const navigate = useNavigate()
   const [availableSchemas, setAvailableSchemas] = useState<Schema[]>([])
   const [preview, setPreview] = useState<SchemaPreviewResponse | null>(null)
   const [pendingValues, setPendingValues] = useState<SchemaInput | null>(null)
@@ -80,6 +84,8 @@ export const SchemaEditor = ({
         : type,
     disabled: type === 'reference' && !hasReferenceTargets
   }))
+
+  const needsReview = needsReviewFromPreview(preview)
 
   const handleFormSubmit = async (values: SchemaInput) => {
     setError(null)
@@ -129,7 +135,14 @@ export const SchemaEditor = ({
 
       setPreview(null)
       setPendingValues(null)
-      handleBack()
+
+      if (needsReview.length > 0) {
+        navigate(entriesPath(schema.id), {
+          state: { needsReview }
+        })
+      } else {
+        handleBack()
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     }

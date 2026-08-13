@@ -1,11 +1,13 @@
 import { Router } from 'express'
 import * as repo from './schemas.repository.js'
+import { db } from '@server/db/db.js'
 import { HttpError } from '@server/http-error.js'
 import { schemaInputSchema } from '@server/validation.js'
 import { emitSchemasChanged } from '@server/realtime/realtime.js'
 import {
   diffSchemaFields,
   findAffectedEntries,
+  migrateSafeRetypedFields,
   previewSchemaDeletion
 } from '@server/schema-evolution.js'
 
@@ -48,7 +50,15 @@ schemasRouter.get('/:id/delete-preview', (req, res) => {
 
 schemasRouter.put('/:id', (req, res) => {
   const input = schemaInputSchema.parse(req.body)
-  const schema = repo.updateSchema(req.params.id, input)
+  const existing = repo.getSchemaById(req.params.id)
+  if (!existing) throw new HttpError(404, 'Schema not found')
+
+  const schema = db.transaction(() => {
+    const changes = diffSchemaFields(existing, input)
+    migrateSafeRetypedFields(existing, changes)
+    return repo.updateSchema(req.params.id, input)
+  })()
+
   emitSchemasChanged(schema.id)
   res.json(schema)
 })

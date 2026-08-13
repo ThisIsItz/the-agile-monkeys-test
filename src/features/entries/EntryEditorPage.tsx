@@ -10,6 +10,7 @@ import { getSchema } from '@/api/schemas'
 import { NotFoundPage } from '@/components/NotFoundPage'
 import { ApiError } from '@/api/client'
 import { entriesPath } from '@/features/routes/paths'
+import { getNeedsReview, withoutEntry } from './needsReview'
 
 export const EntryEditorPage = () => {
   const { entryId, schemaId } = useParams<{
@@ -25,12 +26,22 @@ export const EntryEditorPage = () => {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
 
+  const needsReview = getNeedsReview(location.state)
+
+  const reviewFields = needsReview.filter((item) => item.entryId === entryId)
+
   const handleBack = () => {
     if (location.key !== 'default') {
       navigate(-1)
     } else {
       navigate(entriesPath(schemaId!))
     }
+  }
+
+  const handleSaved = () => {
+    navigate(entriesPath(schemaId!), {
+      state: { needsReview: withoutEntry(needsReview, entryId) }
+    })
   }
 
   useRealtimeEvent<{ schemaId: string }>('schemas:changed', (payload) => {
@@ -116,6 +127,8 @@ export const EntryEditorPage = () => {
         entry={entry}
         schema={schema}
         handleBack={handleBack}
+        handleSaved={handleSaved}
+        reviewFields={reviewFields}
       />
     </div>
   )

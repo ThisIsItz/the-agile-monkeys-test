@@ -1,5 +1,19 @@
-import type { FieldInput, Schema, SchemaInput } from '@shared/types.js'
-import type { FieldChange } from './schema-evolution.types.js'
+import {
+  getEntryById,
+  listEntries
+} from '@server/entries/entries.repository.js'
+import type {
+  EntryFieldValue,
+  FieldInput,
+  FieldType,
+  Schema,
+  SchemaInput
+} from '@shared/types.js'
+import type {
+  FieldChange,
+  FieldChangeImpact
+} from './schema-evolution.types.js'
+import { fieldValueSchema } from './validation.js'
 
 export function diffSchemaFields(
   existing: Schema,
@@ -65,4 +79,83 @@ export function diffSchemaFields(
   }
 
   return changes
+}
+
+function hasValue(
+  value: EntryFieldValue | undefined
+): value is EntryFieldValue {
+  return value !== null && value !== undefined
+}
+
+function isValueValidForShape(
+  shape: { type: FieldType; required: boolean },
+  value: EntryFieldValue | undefined
+): boolean {
+  if (!hasValue(value)) return !shape.required
+  return fieldValueSchema(shape).safeParse(value).success
+}
+
+export function findAffectedEntries(
+  schemaId: string,
+  changes: FieldChange[],
+  input: SchemaInput
+): FieldChangeImpact[] {
+  const entries = listEntries(schemaId)
+
+  const incomingRequiredById = new Map<string, boolean>()
+  for (const field of input.fields) {
+    if (field.id) incomingRequiredById.set(field.id, field.required)
+  }
+
+  return changes.map((change) => {
+    switch (change.changeType) {
+      case 'renamed':
+        return { ...change, affectedEntryIds: [] }
+
+      case 'deleted':
+        return {
+          ...change,
+          affectedEntryIds: entries
+            .filter((entry) => hasValue(entry.data[change.fieldId]))
+            .map((entry) => entry.id)
+        }
+
+      case 'retyped': {
+        const required = incomingRequiredById.get(change.fieldId) ?? false
+        return {
+          ...change,
+          affectedEntryIds: entries
+            .filter(
+              (entry) =>
+                !isValueValidForShape(
+                  { type: change.after, required },
+                  entry.data[change.fieldId]
+                )
+            )
+            .map((entry) => entry.id)
+        }
+      }
+
+      case 'made_required':
+        return {
+          ...change,
+          affectedEntryIds: entries
+            .filter((entry) => !hasValue(entry.data[change.fieldId]))
+            .map((entry) => entry.id)
+        }
+
+      case 'reference_target_changed':
+        return {
+          ...change,
+          affectedEntryIds: entries
+            .filter((entry) => {
+              const value = entry.data[change.fieldId]
+              if (!hasValue(value) || typeof value !== 'string') return false
+              if (!change.after) return false
+              return getEntryById(change.after, value) === undefined
+            })
+            .map((entry) => entry.id)
+        }
+    }
+  })
 }

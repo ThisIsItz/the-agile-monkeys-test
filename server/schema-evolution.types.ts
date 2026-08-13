@@ -42,3 +42,5 @@ interface ReferenceTargetChangedFieldChange {
   before: string | null
   after: string | null
 }
+
+export type FieldChangeImpact = FieldChange & { affectedEntryIds: string[] }

@@ -36,7 +36,9 @@ export const entryInputSchema = z.object({
   data: z.record(z.string(), entryFieldValueSchema)
 })
 
-function fieldValueSchema(field: Field): z.ZodTypeAny {
+export function fieldValueSchema(
+  field: Pick<Field, 'type' | 'required'>
+): z.ZodTypeAny {
   switch (field.type) {
     case 'text':
       return field.required ? z.string().min(1) : z.string()

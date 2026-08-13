@@ -1,4 +1,9 @@
-import { createSchema, getSchemas, updateSchema } from '@/api/schemas'
+import {
+  createSchema,
+  getSchemas,
+  previewSchemaChange,
+  updateSchema
+} from '@/api/schemas'
 import {
   ActionIcon,
   Alert,
@@ -14,9 +19,15 @@ import {
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
-import { FIELD_TYPES, type Schema, type SchemaInput } from '@shared/types'
+import {
+  FIELD_TYPES,
+  type Schema,
+  type SchemaInput,
+  type SchemaPreviewResponse
+} from '@shared/types'
 import { ArrowLeft, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { SchemaChangePreviewModal } from './SchemaChangePreviewModal'
 
 const getSchemaInitialValues = (schema?: Schema): SchemaInput => ({
   name: schema?.name ?? '',
@@ -45,6 +56,8 @@ export const SchemaEditor = ({
   handleBack: () => void
 }) => {
   const [availableSchemas, setAvailableSchemas] = useState<Schema[]>([])
+  const [preview, setPreview] = useState<SchemaPreviewResponse | null>(null)
+  const [pendingValues, setPendingValues] = useState<SchemaInput | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const schemaForm = useForm<SchemaInput>({
@@ -73,18 +86,49 @@ export const SchemaEditor = ({
 
     try {
       if (schema) {
+        const previewResult = await previewSchemaChange(schema.id, values)
+
+        setPreview(previewResult)
+
+        if (previewResult.changes.length > 0) {
+          setPendingValues(values)
+          return
+        }
+
         await updateSchema(schema.id, values)
+
         notifications.show({
           message: `Schema "${values.name}" updated`,
           color: 'green'
         })
       } else {
         await createSchema(values)
+
         notifications.show({
           message: `Schema "${values.name}" created`,
           color: 'green'
         })
       }
+
+      handleBack()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    }
+  }
+
+  const handleApplyChanges = async () => {
+    if (!schema || !pendingValues) return
+
+    try {
+      await updateSchema(schema.id, pendingValues)
+
+      notifications.show({
+        message: `Schema "${pendingValues.name}" updated`,
+        color: 'green'
+      })
+
+      setPreview(null)
+      setPendingValues(null)
       handleBack()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -120,6 +164,15 @@ export const SchemaEditor = ({
           {error}
         </Alert>
       )}
+      <SchemaChangePreviewModal
+        opened={Boolean(preview && pendingValues)}
+        onClose={() => {
+          setPreview(null)
+          setPendingValues(null)
+        }}
+        onConfirm={handleApplyChanges}
+        preview={preview}
+      />
       <form onSubmit={schemaForm.onSubmit(handleFormSubmit)}>
         <TextInput
           {...schemaForm.getInputProps('name')}

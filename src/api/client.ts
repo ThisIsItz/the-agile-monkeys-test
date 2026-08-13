@@ -16,3 +16,16 @@ export async function getErrorMessage(response: Response): Promise<string> {
 
   return response.statusText || 'Request failed'
 }
+
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
+export async function throwApiError(response: Response): Promise<never> {
+  throw new ApiError(await getErrorMessage(response), response.status)
+}

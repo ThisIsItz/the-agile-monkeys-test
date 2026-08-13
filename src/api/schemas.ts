@@ -1,12 +1,12 @@
 import type { Schema, SchemaInput } from '@shared/types.js'
 import { schemaSchema, schemasResponseSchema } from '@shared/validation.js'
-import { getErrorMessage } from './client'
+import { throwApiError } from './client'
 
 export async function getSchemas(): Promise<Schema[]> {
   const response = await fetch('/api/schemas')
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 
   const data = await response.json()
@@ -17,7 +17,7 @@ export async function getSchema(id: string): Promise<Schema> {
   const response = await fetch(`/api/schemas/${id}`)
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 
   const data = await response.json()
@@ -34,7 +34,7 @@ export async function createSchema(schemaInput: SchemaInput): Promise<Schema> {
   })
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 
   const data = await response.json()
@@ -47,7 +47,7 @@ export async function deleteSchema(id: string): Promise<void> {
   })
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 }
 
@@ -64,7 +64,7 @@ export async function updateSchema(
   })
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response))
+    await throwApiError(response)
   }
 
   const data = await response.json()

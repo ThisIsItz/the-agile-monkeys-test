@@ -13,3 +13,6 @@ export function apiEntriesPath(schemaId: string): string {
 export function apiEntryPath(schemaId: string, id: string): string {
   return `/api/schemas/${schemaId}/entries/${id}`
 }
+
+export const apiSchemaPreviewPath = (id: string) =>
+  `${apiSchemaPath(id)}/preview`

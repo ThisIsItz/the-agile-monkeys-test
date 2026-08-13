@@ -80,3 +80,7 @@ interface ReferenceTargetChangedFieldChange {
 }
 
 export type FieldChangeImpact = FieldChange & { affectedEntryIds: string[] }
+
+export type SchemaPreviewResponse = {
+  changes: FieldChangeImpact[]
+}

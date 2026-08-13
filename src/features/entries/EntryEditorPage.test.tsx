@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import { Route, Routes } from 'react-router-dom'
 import type { Schema } from '@shared/types'
@@ -41,6 +41,11 @@ const carSchema: Schema = {
 }
 
 describe('EntryEditorPage', () => {
+  beforeEach(() => {
+    vi.mocked(socket.on).mockClear()
+    vi.mocked(socket.off).mockClear()
+  })
+
   it('fetches the schema and entry by route params and renders the editor pre-filled', async () => {
     vi.mocked(schemasApi.getSchema).mockResolvedValue(carSchema)
     vi.mocked(entriesApi.getEntry).mockResolvedValue({

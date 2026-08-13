@@ -59,6 +59,8 @@ const carSchema: Schema = {
 describe('SchemaList', () => {
   beforeEach(() => {
     vi.mocked(schemasApi.getSchemas).mockResolvedValue([personSchema, carSchema])
+    vi.mocked(socket.on).mockClear()
+    vi.mocked(socket.off).mockClear()
   })
 
   it('renders fetched schemas with fields and resolved reference target names', async () => {

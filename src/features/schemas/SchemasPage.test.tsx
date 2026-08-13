@@ -5,13 +5,9 @@ import type { Schema } from '@shared/types'
 import { renderWithProviders } from '@/test/render'
 import { SchemaList } from './SchemasPage'
 import * as schemasApi from '@/api/schemas'
-import { modals } from '@mantine/modals'
 import { socket } from '@/realtime/socket'
 
 vi.mock('@/api/schemas')
-vi.mock('@mantine/modals', () => ({
-  modals: { openConfirmModal: vi.fn() }
-}))
 vi.mock('@/realtime/socket', () => ({
   socket: { on: vi.fn(), off: vi.fn() }
 }))
@@ -72,7 +68,12 @@ describe('SchemaList', () => {
     expect(screen.getByText('→ Person')).toBeTruthy()
   })
 
-  it('deletes a schema after confirming and refreshes the list', async () => {
+  it('previews the deletion impact, then deletes the schema after confirming and refreshes the list', async () => {
+    vi.mocked(schemasApi.previewSchemaDeletion).mockResolvedValue({
+      schemaId: 'person-1',
+      affectedEntryIds: [],
+      blockingReferences: []
+    })
     vi.mocked(schemasApi.deleteSchema).mockResolvedValue(undefined)
     const user = userEvent.setup()
 
@@ -82,18 +83,44 @@ describe('SchemaList', () => {
     const deleteButtons = screen.getAllByRole('button', { name: 'Delete' })
     await user.click(deleteButtons[0])
 
-    expect(modals.openConfirmModal).toHaveBeenCalledTimes(1)
-    const { onConfirm } = vi.mocked(modals.openConfirmModal).mock.calls[0][0] as {
-      onConfirm: () => void
-    }
+    expect(schemasApi.previewSchemaDeletion).toHaveBeenCalledWith('person-1')
+    expect(await screen.findByText('This schema has no entries.')).toBeTruthy()
 
     vi.mocked(schemasApi.getSchemas).mockResolvedValue([carSchema])
-    onConfirm()
+    await user.click(screen.getByRole('button', { name: 'Delete schema' }))
 
     await waitFor(() =>
       expect(schemasApi.deleteSchema).toHaveBeenCalledWith('person-1')
     )
     await waitFor(() => expect(screen.queryByText('Person')).toBeNull())
+  })
+
+  it('disables the delete confirmation when another schema still references it', async () => {
+    vi.mocked(schemasApi.previewSchemaDeletion).mockResolvedValue({
+      schemaId: 'person-1',
+      affectedEntryIds: [],
+      blockingReferences: [
+        {
+          schemaId: 'car-1',
+          schemaName: 'Car',
+          fieldId: 'f2',
+          fieldName: 'owner'
+        }
+      ]
+    })
+    const user = userEvent.setup()
+
+    renderWithProviders(<SchemaList />)
+
+    await screen.findByText('Person')
+    const deleteButtons = screen.getAllByRole('button', { name: 'Delete' })
+    await user.click(deleteButtons[0])
+
+    const confirmButton = await screen.findByRole('button', {
+      name: 'Delete schema'
+    })
+    expect(confirmButton).toBeDisabled()
+    expect(schemasApi.deleteSchema).not.toHaveBeenCalled()
   })
 
   it('refetches the list when a schemas:changed event is received', async () => {

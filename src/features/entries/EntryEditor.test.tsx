@@ -45,7 +45,6 @@ describe('EntryEditor', () => {
     renderWithProviders(
       <EntryEditor
         schema={carSchemaTextOnly}
-        handleBack={vi.fn()}
         handleSaved={handleSaved}
         reviewFields={[]}
       />
@@ -75,7 +74,6 @@ describe('EntryEditor', () => {
       <EntryEditor
         schema={carSchemaTextOnly}
         entry={existingEntry}
-        handleBack={vi.fn()}
         handleSaved={vi.fn()}
         reviewFields={[]}
       />
@@ -138,7 +136,6 @@ describe('EntryEditor', () => {
     renderWithProviders(
       <EntryEditor
         schema={carSchemaWithReference}
-        handleBack={vi.fn()}
         handleSaved={vi.fn()}
         reviewFields={[]}
       />
@@ -186,7 +183,6 @@ describe('EntryEditor', () => {
       <EntryEditor
         schema={carSchemaWithYear}
         entry={existingEntry}
-        handleBack={vi.fn()}
         handleSaved={vi.fn()}
         reviewFields={[]}
       />

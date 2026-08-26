@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import type { Schema } from '@shared/types'
@@ -95,8 +95,11 @@ describe('SchemaEditor', () => {
     })
     await user.click(referenceSelect)
 
-    expect(await screen.findByText('Person')).toBeTruthy()
-    expect(screen.queryByText('Car')).toBeNull()
+    const listboxId = referenceSelect.getAttribute('aria-controls')!
+    const listbox = within(document.getElementById(listboxId)!)
+
+    expect(await listbox.findByText('Person')).toBeTruthy()
+    expect(listbox.queryByText('Car')).toBeNull()
   })
 
   it('shows the change preview before applying, and only updates after confirming', async () => {
